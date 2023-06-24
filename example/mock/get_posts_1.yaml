@@ -1,0 +1,6 @@
+when:
+  method: GET
+  path: /posts/1
+then:
+  status: 200
+  body: 'how to build a CLI program in rust'

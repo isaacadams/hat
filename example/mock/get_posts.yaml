@@ -1,0 +1,11 @@
+when:
+  method: GET
+  path: /posts
+then:
+  status: 200
+  body: |-
+    [
+      "how to build a CLI program in rust",
+      "why you might need a vacation after build a CLI program in rust",
+      "reasons for drinking beer while writing a rust CLI program"
+    ]

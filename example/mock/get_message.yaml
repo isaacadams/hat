@@ -1,0 +1,9 @@
+when:
+  method: GET
+  path: /message
+then:
+  status: 200
+  body: |-
+    {
+      "message" : "hello world!"
+    }

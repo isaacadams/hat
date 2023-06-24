@@ -1,0 +1,14 @@
+when:
+  method: POST
+  path: /message
+then:
+  status: 200
+  header:
+    - name: content-type
+      value: application/json
+  body: |-
+    {
+      "id": 2,
+      "message": "hello, a second time",
+      "next_route": "posts"
+    }

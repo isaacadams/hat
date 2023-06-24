@@ -1,0 +1,8 @@
+# https://doc.rust-lang.org/nightly/cargo/reference/config.html
+
+[env]
+RUST_BACKTRACE="1"
+RUST_LOG="info,httpmock=debug"
+
+[http]
+debug=true

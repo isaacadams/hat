@@ -1,0 +1,5 @@
+when:
+  method: GET
+  path: /200
+then:
+  status: 200
