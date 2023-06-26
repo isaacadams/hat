@@ -1,21 +1,15 @@
 use std::process::ExitCode;
 
-fn main() -> ExitCode {
-    init_logging();
+fn main() -> anyhow::Result<ExitCode> {
+    //init_logging();
 
-    match hat::start() {
-        Ok(success) => {
-            if success {
-                ExitCode::SUCCESS
-            } else {
-                ExitCode::FAILURE
-            }
-        }
-        Err(e) => {
-            println!("{}", e);
+    hat::start().map(|s| {
+        if s {
+            ExitCode::SUCCESS
+        } else {
             ExitCode::FAILURE
         }
-    }
+    })
 }
 
 pub fn init_logging() {

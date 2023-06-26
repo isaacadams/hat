@@ -133,3 +133,12 @@ impl Queryable for BodyContent {
 cargo tree --target=x86_64-unknown-linux-musl | grep open
 cargo tree --target=x86_64-unknown-linux-musl -i openssl-sys | grep open
 ```
+
+# Missing Configuration
+
+- default headers
+- timeout on requests
+
+# Missing Tests
+
+- bad connection

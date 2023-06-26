@@ -5,12 +5,30 @@ use crate::{
     factory,
     runner::{HatTestBuilder, HatTestOutput},
 };
+use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::Path};
 
 pub fn read<P: AsRef<Path>>(path: P) -> anyhow::Result<Config> {
-    let buffer = std::fs::read(path.as_ref())?; //"./tests/config.toml"
-    let toml: Config = toml::from_str(String::from_utf8_lossy(&buffer).as_ref())?;
+    let buffer = std::fs::read_to_string(path.as_ref()).with_context(|| {
+        let path = path.as_ref().to_string_lossy();
+        match std::env::current_dir() {
+            Ok(cwd) => format!(
+                "could not find {}\ncurrent working directory: {}\n",
+                path,
+                cwd.to_string_lossy(),
+            ),
+            Err(e) => format!(
+                "could not find {}\nfailed to resolve current working directory\ncause: {}",
+                path, e
+            ),
+        }
+    })?;
+
+    let toml: Config = toml::de::from_str(&buffer).with_context(|| {
+        let path = path.as_ref().to_string_lossy();
+        format!("{} has invalid schema", path)
+    })?;
 
     Ok(toml)
 }

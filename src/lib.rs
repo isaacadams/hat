@@ -10,7 +10,6 @@ mod runner;
 #[cfg(test)]
 mod test;
 
-use anyhow::Context;
 use clap::Parser;
 use runner::HatRunner;
 
@@ -32,8 +31,7 @@ pub fn start() -> anyhow::Result<bool> {
 }
 
 fn test(config_path: &str) -> anyhow::Result<bool> {
-    let config =
-        config::read(config_path).context(format!("cannot find or load {}", config_path))?;
+    let config = config::read(config_path)?;
 
     let mut iter = config.tests.into_iter();
     let mut runner = HatRunner::new(
