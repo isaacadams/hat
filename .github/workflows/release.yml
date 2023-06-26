@@ -69,7 +69,7 @@ jobs:
       CARGO: cargo
       BUILD_FLAGS: '--verbose --release'
       # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
-      TARGET_DIR: ./target
+      TARGET_DIR: target
     steps:
       - uses: actions/checkout@v3
 
@@ -99,6 +99,7 @@ jobs:
           cargo install cross
           echo "CARGO=cross" >> $GITHUB_ENV
           echo "BUILD_FLAGS=--target ${{ matrix.target }} ${{ env.BUILD_FLAGS }}" >> $GITHUB_ENV
+          echo "TARGET_DIR=target/${{ matrix.target }}" > $GITHUB_ENV
 
       - name: echo
         run: |
@@ -119,11 +120,11 @@ jobs:
           cp README.md "$package/"
 
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp "target/${{ matrix.target }}/release/${{ env.CLI_NAME }}.exe" "$package/"
+            cp "${{ env.TARGET_DIR }}/release/${{ env.CLI_NAME }}.exe" "$package/"
             7z a "$package.zip" "$package"
             echo "ASSET=$package.zip" >> $GITHUB_ENV
           else
-            cp "target/${{ matrix.target }}/release/${{ env.CLI_NAME }}" "$package/"
+            cp "${{ env.TARGET_DIR }}/release/${{ env.CLI_NAME }}" "$package/"
             tar czf "$package.tar.gz" "$package"
             echo "ASSET=$package.tar.gz" >> $GITHUB_ENV
           fi
