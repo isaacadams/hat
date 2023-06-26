@@ -14,9 +14,8 @@ pub trait Assert {
     fn assert(&self, buffer: &mut String) -> bool;
 }
 
-use reqwest::blocking::{Client, Request, Response};
+use reqwest::blocking::{Client, Response};
 pub type HttpClient = Client;
-pub type HttpRequest = Request;
 pub type HttpResponse = Response;
 pub type HttpError = reqwest::Error;
 
@@ -26,6 +25,7 @@ pub trait RequestExecutor {
 
 type UtilResult<T> = Result<T, UtilError>;
 
+#[allow(dead_code)]
 pub fn parse(selector: String, json: serde_json::Value) -> Result<String, UtilError> {
     let parts = selector.split('.');
     let mut selected = &json;

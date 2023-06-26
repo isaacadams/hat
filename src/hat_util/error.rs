@@ -10,8 +10,6 @@ pub enum UtilError {
     IO(#[from] std::io::Error),
     #[error("{0}")]
     Reqwest(#[from] reqwest::Error),
-    #[error("{0}")]
-    ParsingError(String),
     #[error("{0:#?}")]
     InvalidHeaderName(#[from] reqwest::header::InvalidHeaderName),
     #[error("{0:#?}")]

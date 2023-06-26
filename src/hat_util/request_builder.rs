@@ -33,6 +33,7 @@ impl RequestBuilder {
         self.body = Some(body);
     }
 
+    #[allow(dead_code)]
     pub fn has_body(&self) -> bool {
         self.body.is_some()
     }
@@ -41,6 +42,7 @@ impl RequestBuilder {
         !self.headers.is_empty()
     }
 
+    #[allow(dead_code)]
     pub fn to_body(self) -> Option<String> {
         self.body
     }
