@@ -13,7 +13,7 @@ cargo install httpmock --features="standalone"
 ```bash
 # run these two commands in separate terminals
 cargo watch -c -w example/mock -- httpmock -p 5000 --mock-files-dir ./example/mock
-cargo watch -c -w example -i example/mock -i **/*.md -x 'run example/config.toml'
+cargo watch -c -w example -i example/mock -x 'run example/config.toml'
 ```
 
 # Release

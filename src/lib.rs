@@ -6,6 +6,7 @@ mod hat_util;
 mod http_file_parser;
 #[allow(dead_code)]
 mod operator;
+mod query;
 mod runner;
 #[cfg(test)]
 mod test;

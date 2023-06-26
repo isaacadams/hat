@@ -1,13 +1,16 @@
 use std::{collections::HashMap, slice::Iter};
 
+#[allow(dead_code)]
 pub enum StoreUnion {
     MapStringToJsonValue(StoreMap),
+    MapStringToBodyContent(HashMap<String, crate::query::BodyContent>),
 }
 
 impl Store for StoreUnion {
-    fn fetch_value(&self, key: &str) -> Option<&serde_json::Value> {
+    fn fetch_value(&self, key: &str) -> Option<String> {
         match self {
-            StoreUnion::MapStringToJsonValue(s) => s.fetch_value(key),
+            StoreUnion::MapStringToJsonValue(s) => s.fetch_value(key).map(|v| v.to_string()),
+            StoreUnion::MapStringToBodyContent(_) => todo!(),
         }
     }
 }
@@ -24,7 +27,7 @@ impl<'a, 'b, A: Store, B: Store> StoreComposed<'a, 'b, A, B> {
 }
 
 impl<'a, 'b, A: Store, B: Store> Store for StoreComposed<'a, 'b, A, B> {
-    fn fetch_value(&self, key: &str) -> Option<&serde_json::Value> {
+    fn fetch_value(&self, key: &str) -> Option<String> {
         self.store_1
             .fetch_value(key)
             .or(self.store_2.fetch_value(key))
@@ -40,21 +43,16 @@ lazy_static::lazy_static! {
 }
 
 pub trait Store {
-    fn fetch_value(&self, key: &str) -> Option<&serde_json::Value>;
+    fn fetch_value(&self, key: &str) -> Option<String>;
 
     fn match_and_replace(&self, hydrate: &str) -> String {
         let result = REGEX.replace_all(hydrate, |cap: &Captures| {
             let key = &cap[1];
-            let value = if let Some(x) = self.fetch_value(key) {
+            if let Some(x) = self.fetch_value(key) {
                 x
             } else {
-                return format!("{{{{{}}}}}", key);
-            };
-
-            value
-                .as_str()
-                .map(|f| f.to_string())
-                .unwrap_or(value.to_string())
+                format!("{{{{{}}}}}", key)
+            }
         });
 
         result.into_owned()
@@ -69,13 +67,13 @@ pub trait Store {
 }
 
 impl Store for StoreMap {
-    fn fetch_value(&self, key: &str) -> Option<&serde_json::Value> {
-        self.get(key)
+    fn fetch_value(&self, key: &str) -> Option<String> {
+        self.get(key).map(|s| s.to_string())
     }
 }
 
 impl<T: Store> Store for Iter<'_, &T> {
-    fn fetch_value(&self, key: &str) -> Option<&serde_json::Value> {
+    fn fetch_value(&self, key: &str) -> Option<String> {
         for s in self.as_ref() {
             let value = s.fetch_value(key);
             if value.is_some() {
@@ -134,7 +132,7 @@ mod test {
         let store = StoreUnion::MapStringToJsonValue(map);
 
         let hydrated = store.match_and_replace("{{key}}");
-        assert_eq!(hydrated, "value");
+        assert_eq!(hydrated, "\"value\"");
 
         let hydrated = store.match_and_replace("{{bool}} == {{number}}");
         assert_eq!(hydrated, "false == 123");
@@ -152,7 +150,7 @@ mod test {
         let store = StoreUnion::MapStringToJsonValue(map);
 
         let hydrated = store.match_and_replace("{{r.headers.content-type}}");
-        assert_eq!(hydrated, "application/json");
+        assert_eq!(hydrated, "\"application/json\"");
 
         let hydrated = store.match_and_replace("{{header.status}} == 200");
         assert_eq!(hydrated, "200 == 200");
@@ -166,7 +164,7 @@ mod test {
 
         let store = StoreUnion::MapStringToJsonValue(map);
 
-        let hydrated = store.match_and_replace("\"{{r.body.[0].title}}\" == \"hello world\"");
+        let hydrated = store.match_and_replace("{{r.body.[0].title}} == \"hello world\"");
         assert_eq!(hydrated, "\"hello world\" == \"hello world\"");
     }
 }

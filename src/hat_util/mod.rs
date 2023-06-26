@@ -24,17 +24,3 @@ pub trait RequestExecutor {
 }
 
 type UtilResult<T> = Result<T, UtilError>;
-
-#[allow(dead_code)]
-pub fn parse(selector: String, json: serde_json::Value) -> Result<String, UtilError> {
-    let parts = selector.split('.');
-    let mut selected = &json;
-    for p in parts {
-        selected = &selected[p];
-    }
-
-    match selected.as_str() {
-        Some(v) => Ok(v.to_string()),
-        None => Err(UtilError::InvalidSelector(selector)),
-    }
-}

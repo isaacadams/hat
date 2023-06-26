@@ -13,7 +13,7 @@ name = "status + json body, no headers"
 http = "GET {{base}}/message"
 assertions = """
 {{r.status}} == 200
-"{{r.body.message}}" == "hello world!"
+{{r.body.message}} == "hello world!"
 """
 
 [[tests]]
@@ -22,9 +22,9 @@ http = "POST {{base}}/message"
 assertions = """
 {{r.status}} == 200
 {{r.body.id}} == 2
-"{{r.headers.content-type}}" == "application/json"
-"{{r.body.message}}" == "hello, a second time"
-"{{r.body.next_route}}" == "posts"
+{{r.headers.content-type}} == "application/json"
+{{r.body.message}} == "hello, a second time"
+{{r.body.next_route}} == "posts"
 """
 [tests.outputs]
 messageId = "{{r.body.id}}"
@@ -36,9 +36,9 @@ http = "GET {{base}}/{{nextRoute}}"
 assertions = """
 {{r.status}} == 200
 {{r.headers.content-length}} > 0
-"{{r.body.[0]}}" == "how to build a CLI program in rust"
-"{{r.body.[1]}}" == "why you might need a vacation after build a CLI program in rust"
-"{{r.body.[2]}}" == "reasons for drinking beer while writing a rust CLI program"
+{{r.body.[0]}} == "how to build a CLI program in rust"
+{{r.body.[1]}} == "why you might need a vacation after build a CLI program in rust"
+{{r.body.[2]}} == "reasons for drinking beer while writing a rust CLI program"
 """
 
 [[tests]]
@@ -46,7 +46,7 @@ name = "text body works"
 http = "GET {{base}}/posts/1"
 assertions = """
 {{r.status}} == 200
-"{{r.body}}" == "how to build a CLI program in rust"
+{{r.body}} == "how to build a CLI program in rust"
 """
 
 [[tests]]
