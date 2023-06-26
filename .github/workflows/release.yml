@@ -106,7 +106,8 @@ jobs:
           package="${{ env.CLI_NAME }}-${{ needs.create-release.outputs.release_version }}-${{ matrix.target }}"
           mkdir -p "$package"
 
-          cp {README.md} "$package/"
+          ls
+          cp README.md "$package/"
 
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             cp "target/${{ matrix.target }}/release/${{ env.CLI_NAME }}.exe" "$package/"
