@@ -159,7 +159,7 @@ Accept application/json
         assert!(result.has_headers());
         assert!(result.has_body());
         assert_eq!(
-            result.to_body(),
+            result.into_body(),
             Some(String::from(
                 r#"{
     "message": "hello world",

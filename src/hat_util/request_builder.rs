@@ -43,7 +43,7 @@ impl RequestBuilder {
     }
 
     #[allow(dead_code)]
-    pub fn to_body(self) -> Option<String> {
+    pub fn into_body(self) -> Option<String> {
         self.body
     }
 
