@@ -115,6 +115,7 @@ jobs:
           mkdir -p "$package"
 
           ls
+          ls target/**
           cp README.md "$package/"
 
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
