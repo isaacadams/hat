@@ -14,6 +14,9 @@ cargo install httpmock --features="standalone"
 # run these two commands in separate terminals
 cargo watch -c -w example/mock -- httpmock -p 5000 --mock-files-dir ./example/mock
 cargo watch -c -w example -i example/mock -x 'run example/config.toml'
+
+# watch specific tests
+cargo watch -c -w src -x 'test -- --nocapture --test test::v2'
 ```
 
 # Release
@@ -103,6 +106,7 @@ impl Queryable for BodyContent {
 
 # TODO
 
+- add STATUS URL to test output after name
 - make global store aware of environment variables, and allow them to be used with {{env:...}} syntax
 - replace reqwest with hand rolled simple http client with (hopefully) zero dependencies
 - finish plan for how to release
@@ -136,6 +140,7 @@ cargo tree --target=x86_64-unknown-linux-musl -i openssl-sys | grep open
 
 # Missing Configuration
 
+- named env settings (prod, dev, staging, etc.)
 - default headers
 - timeout on requests
 

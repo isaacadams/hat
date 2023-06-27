@@ -52,3 +52,23 @@ fn jq(input: &str, filter: &str) -> Vec<Result<Val, Error>> {
 
     out.collect()
 }
+
+#[test]
+fn v2() {
+    use evalexpr::*;
+    let context = r#"
+        a = 1
+    "#;
+
+    let output = evalexpr::eval(context);
+    let mut context = HashMapContext::new();
+    context.set_value("user.id".into(), 1.into()).unwrap(); // Do proper error handling here
+    context.set_value("two".into(), 2.into()).unwrap(); // Do proper error handling here
+    context.set_value("three".into(), 3.into()).unwrap(); // Do proper error handling here
+    assert_eq!(
+        eval_with_context("user.id + two + three", &context),
+        Ok(Value::from(6))
+    );
+    assert_eq!(eval_with_context("user.id", &context), Ok(Value::from(1)));
+    println!("hello world {:#?}", output);
+}
