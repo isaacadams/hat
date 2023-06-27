@@ -2,6 +2,7 @@ use std::process::ExitCode;
 
 fn main() -> anyhow::Result<ExitCode> {
     //init_logging();
+    env_logger::init();
 
     hat::start().map(|s| {
         if s {

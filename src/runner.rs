@@ -52,9 +52,10 @@ impl HatRunner {
                 Err(e) => {
                     result.push_str(crate::assertion::pretty_bool(false));
                     result.push_str(e.to_string().as_str());
-                    result.push_str("\n\n");
                 }
             };
+
+            result.push_str("\n\n");
         }
 
         println!("{}", result);

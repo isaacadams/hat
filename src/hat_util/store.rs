@@ -9,8 +9,15 @@ pub enum StoreUnion {
 impl Store for StoreUnion {
     fn fetch_value(&self, key: &str) -> Option<String> {
         match self {
+            // key = r.headers.content-type
             StoreUnion::MapStringToJsonValue(s) => s.fetch_value(key).map(|v| v.to_string()),
-            StoreUnion::MapStringToBodyContent(_) => todo!(),
+            // key = headers | content-type
+            StoreUnion::MapStringToBodyContent(s) => {
+                let mut iter = key.split(r#"|"#);
+                let key = iter.next()?.trim();
+                let filter = iter.next().or(Some(""))?.trim();
+                s.get(key)?.query(filter)
+            }
         }
     }
 }
@@ -37,7 +44,9 @@ impl<'a, 'b, A: Store, B: Store> Store for StoreComposed<'a, 'b, A, B> {
 pub type StoreMap = HashMap<String, serde_json::Value>;
 
 use regex::{Captures, Regex};
-const PATTERN: &str = r#"\{\{(([\.]?(\w+[-]?|\[\d+\]))+)\}\}"#;
+
+use crate::query::Queryable;
+const PATTERN: &str = r#"\{\{(.*?)}\}"#;
 lazy_static::lazy_static! {
     static ref REGEX: Regex = Regex::new(PATTERN).expect("pattern is invalid");
 }
@@ -51,6 +60,7 @@ pub trait Store {
             if let Some(x) = self.fetch_value(key) {
                 x
             } else {
+                log::debug!("could not find {}", key);
                 format!("{{{{{}}}}}", key)
             }
         });
@@ -166,5 +176,16 @@ mod test {
 
         let hydrated = store.match_and_replace("{{r.body.[0].title}} == \"hello world\"");
         assert_eq!(hydrated, "\"hello world\" == \"hello world\"");
+    }
+
+    #[test]
+    fn key_split() {
+        let key = "headers | content-type";
+        let mut iter = key.split(r#"|"#);
+        let key = iter.next().unwrap().trim();
+        let filter = iter.next().unwrap().trim();
+
+        assert_eq!(key, "headers");
+        assert_eq!(filter, "content-type");
     }
 }

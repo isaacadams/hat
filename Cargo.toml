@@ -32,7 +32,9 @@ clap = { version = "4.3.3", features = ["derive"] }
 anyhow = { version = "1.0.71", features = ["backtrace"] }
 lazy_static = "1.4.0"
 toml = "0.7.4"
-jsonpath-rust = "0.3.0"
+gjson = "0.8.1"
+env_logger = "0.10.0"
+
 
 [dev-dependencies]
 jaq-core = "0.10.0"

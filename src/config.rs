@@ -65,7 +65,7 @@ fn build<T: Store + RequestExecutor>(
     let http_contents = crate::http_file_parser::get_contents(hat_test_config.http)?;
     // replace variables in raw http request
     let http_contents = hat.match_and_replace(http_contents.as_str());
-    log::debug!("{}", &http_contents);
+    log::debug!("HTTP: {}", &http_contents);
 
     // parses the raw http request into something the http client can use
     let request = crate::http_file_parser::parse(http_contents.as_str())?;

@@ -1,5 +1,6 @@
 use crate::error::HatError;
 use crate::hat_util::{Store, StoreMap, StoreUnion};
+use crate::query::BodyContent;
 use std::collections::HashMap;
 
 pub fn outputs<S: Store>(
@@ -16,31 +17,54 @@ pub fn outputs<S: Store>(
         evaluated_outputs.insert(key, serde_json::to_value(&value)?);
     }
 
-    log::info!("{:#?}", evaluated_outputs);
+    log::info!("OUTPUTS: {:#?}", evaluated_outputs);
 
     Ok(StoreUnion::MapStringToJsonValue(evaluated_outputs))
 }
 
 pub fn response(response: reqwest::blocking::Response) -> Result<StoreUnion, HatError> {
-    let mut store = StoreMap::default();
+    //let mut store = StoreMap::default();
+    let mut store = HashMap::<String, BodyContent>::default();
 
     let _ = internal::store_from_response(&mut store, &response);
-    let _ = internal::store_from_response_body(&mut store, response);
+    let _ = store_from_response_body(&mut store, response);
 
-    Ok(StoreUnion::MapStringToJsonValue(store))
+    Ok(StoreUnion::MapStringToBodyContent(store))
+}
+
+pub fn store_from_response_body(
+    buffer: &mut HashMap<String, BodyContent>,
+    response: reqwest::blocking::Response,
+) -> Result<(), HatError> {
+    let text = response.text()?;
+    log::info!("BODY: {}", &text);
+
+    if text.is_empty() {
+        return Ok(());
+    }
+
+    let content = BodyContent::new(text);
+    log::info!("STORE: {:#?}", &content);
+
+    buffer.insert("body".to_string(), content);
+
+    Ok(())
 }
 
 mod internal {
+    use std::collections::HashMap;
+
     use crate::error::HatError;
     use crate::hat_util::StoreMap;
+    use crate::query::BodyContent;
 
     pub fn store_from_response(
-        buffer: &mut StoreMap,
+        buffer: &mut HashMap<String, BodyContent>,
         response: &reqwest::blocking::Response,
     ) -> Result<(), HatError> {
         buffer.insert(
-            "r.status".to_string(),
-            serde_json::to_value(response.status().as_u16()).unwrap(),
+            "status".to_string(),
+            BodyContent::Plaintext(response.status().as_u16().to_string()),
         );
 
         let headers = response.headers();
@@ -49,46 +73,24 @@ mod internal {
             return Ok(());
         }
 
+        let mut json = HashMap::<String, String>::default();
+
         for (key, value) in headers.iter().filter(|(_, v)| !v.is_empty()) {
-            let key = format!("r.headers.{}", key);
-            let value = serde_json::to_value(
+            json.insert(
+                key.to_string(),
                 value
                     .to_str()
-                    .map_err(|e| HatError::ParsingError(e.to_string()))?,
-            )?;
-
-            let mut parse_buffer = Vec::new();
-            self::parse(&mut parse_buffer, key, value);
-            for (k, v) in parse_buffer {
-                buffer.insert(k, v);
-            }
+                    .map_err(|e| HatError::ParsingError(e.to_string()))?
+                    .to_string(),
+            );
         }
 
-        Ok(())
-    }
+        buffer.insert(
+            "headers".to_string(),
+            BodyContent::Json(serde_json::to_string(&json)?),
+        );
 
-    pub fn store_from_response_body(
-        buffer: &mut StoreMap,
-        response: reqwest::blocking::Response,
-    ) -> Result<(), HatError> {
-        let text = response.text().map(|text| {
-            log::info!("BODY: {}", &text);
-            buffer.insert(
-                String::from("r.body"),
-                serde_json::Value::from(text.clone()),
-            );
-            text
-        })?;
-
-        let _ = text.parse().map(|json| {
-            let mut parse_buffer = Vec::new();
-            self::parse(&mut parse_buffer, String::from("r.body"), json);
-            for v in parse_buffer {
-                buffer.insert(v.0, v.1);
-            }
-        });
-
-        log::info!("STORE: {:#?}", &buffer);
+        log::debug!("{:#?}", &buffer);
 
         Ok(())
     }

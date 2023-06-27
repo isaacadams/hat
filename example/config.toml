@@ -3,55 +3,55 @@ base = "http://localhost:5000"
 
 [[tests]]
 name = "status only, no headers or body"
-http = "GET {{base}}/200"
+http = "GET {{:base}}/200"
 assertions = """
-{{r.status}} == 200
+{{status}} == 200
 """
 
 [[tests]]
 name = "status + json body, no headers"
-http = "GET {{base}}/message"
+http = "GET {{:base}}/message"
 assertions = """
-{{r.status}} == 200
-{{r.body.message}} == "hello world!"
+{{status}} == 200
+{{body | message}} == "hello world!"
 """
 
 [[tests]]
 name = "post message w/ header"
-http = "POST {{base}}/message"
+http = "POST {{:base}}/message"
 assertions = """
-{{r.status}} == 200
-{{r.body.id}} == 2
-{{r.headers.content-type}} == "application/json"
-{{r.body.message}} == "hello, a second time"
-{{r.body.next_route}} == "posts"
+{{status}} == 200
+{{body | id}} == 2
+{{headers | content-type}} == "application/json"
+{{body | message}} == "hello, a second time"
+{{body | next_route}} == "posts"
 """
 [tests.outputs]
-messageId = "{{r.body.id}}"
-nextRoute = "{{r.body.next_route}}"
+messageId = "{{body | id}}"
+nextRoute = "{{body | next_route}}"
 
 [[tests]]
 name = "show example of querying arrays in response"
-http = "GET {{base}}/{{nextRoute}}"
+http = "GET {{:base}}/{{:nextRoute}}"
 assertions = """
-{{r.status}} == 200
-{{r.headers.content-length}} > 0
-{{r.body.[0]}} == "how to build a CLI program in rust"
-{{r.body.[1]}} == "why you might need a vacation after build a CLI program in rust"
-{{r.body.[2]}} == "reasons for drinking beer while writing a rust CLI program"
+{{status}} == 200
+{{headers | content-length}} > 0
+{{body | 0}} == "how to build a CLI program in rust"
+{{body | 1}} == "why you might need a vacation after build a CLI program in rust"
+{{body | 2}} == "reasons for drinking beer while writing a rust CLI program"
 """
 
 [[tests]]
 name = "text body works"
-http = "GET {{base}}/posts/1"
+http = "GET {{:base}}/posts/1"
 assertions = """
-{{r.status}} == 200
-{{r.body}} == "how to build a CLI program in rust"
+{{status}} == 200
+{{body}} == "how to build a CLI program in rust"
 """
 
 [[tests]]
 name = "show example of querying arrays in response"
 http = "example/create-post.http"
 assertions = """
-{{r.status}} == 201
+{{status}} == 201
 """

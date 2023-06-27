@@ -2,7 +2,7 @@
 
 [env]
 RUST_BACKTRACE="1"
-RUST_LOG="info,httpmock=debug"
+RUST_LOG="debug,httpmock=debug"
 
 [http]
 debug=true
