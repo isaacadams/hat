@@ -16,7 +16,18 @@ impl Queryable for BodyContent {
     // e.g. Plaintext -> filter = "/\w+/g"
     fn query(&self, filter: &str) -> Option<String> {
         match self {
-            BodyContent::Json(json) => Some(gjson::get(json, filter).str().to_string()),
+            BodyContent::Json(json) => {
+                let value = gjson::get(json, filter);
+                Some(match value.kind() {
+                    gjson::Kind::Null => return None,
+                    gjson::Kind::String => value.str().to_string(),
+                    gjson::Kind::False => todo!(),
+                    gjson::Kind::True => todo!(),
+                    gjson::Kind::Number => todo!(),
+                    gjson::Kind::Array => todo!(),
+                    gjson::Kind::Object => todo!(),
+                })
+            }
             BodyContent::Xml(_) => todo!(),
             BodyContent::Plaintext(text) => Some(text.to_owned()),
         }

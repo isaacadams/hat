@@ -44,7 +44,7 @@ impl Assert for TestAssertions {
         }
 
         buffer.insert_str(start, self::pretty_bool(test));
-        buffer.insert_str(start, "\n\n");
+        buffer.insert_str(start, "\n");
 
         test
     }

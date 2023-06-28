@@ -8,7 +8,16 @@ pub enum StoreUnion {
 
 impl Store for StoreUnion {
     fn fetch_value(&self, key: &str) -> Option<String> {
-        match self {
+        let mut is_literal = true;
+        let key = if key.starts_with(":") {
+            is_literal = false;
+            // remove the ':'
+            &key[1..]
+        } else {
+            key
+        };
+
+        let value = match self {
             // key = r.headers.content-type
             StoreUnion::MapStringToJsonValue(s) => s.fetch_value(key).map(|v| v.to_string()),
             // key = headers | content-type
@@ -18,6 +27,16 @@ impl Store for StoreUnion {
                 let filter = iter.next().or(Some(""))?.trim();
                 s.get(key)?.query(filter)
             }
+        };
+
+        if is_literal {
+            value.map(|mut v| {
+                v.insert(0, '"');
+                v.push('"');
+                v
+            })
+        } else {
+            value
         }
     }
 }
