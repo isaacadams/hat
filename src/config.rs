@@ -51,7 +51,7 @@ impl HatTestBuilder for TestConfig {
     fn build<T: Store + RequestExecutor>(self, hat: &T) -> anyhow::Result<HatTestOutput> {
         match build(self, hat) {
             Ok(t) => Ok(t),
-            Err(e) => Err(HatError::TestFailed(e.to_string()).into()),
+            Err(e) => Err(HatError::TestFailedToBuild(e.to_string()).into()),
         }
     }
 }

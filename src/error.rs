@@ -14,6 +14,6 @@ pub enum HatError {
     TomlError(#[from] toml::de::Error),
     #[error("{0}")]
     Anyhow(#[from] anyhow::Error),
-    #[error("test failed before execution, cause: {0}")]
-    TestFailed(String),
+    #[error("test failed to build before execution, cause: {0}")]
+    TestFailedToBuild(String),
 }
