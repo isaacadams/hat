@@ -1,6 +1,6 @@
 use crate::error::HatError;
 use crate::hat_util::{Store, StoreMap, StoreUnion};
-use crate::query::BodyContent;
+use crate::query::Content;
 use std::collections::HashMap;
 
 pub fn outputs<S: Store>(
@@ -24,7 +24,7 @@ pub fn outputs<S: Store>(
 
 pub fn response(response: reqwest::blocking::Response) -> Result<StoreUnion, HatError> {
     //let mut store = StoreMap::default();
-    let mut store = HashMap::<String, BodyContent>::default();
+    let mut store = HashMap::<String, Content>::default();
 
     let _ = internal::store_from_response(&mut store, &response);
     let _ = store_from_response_body(&mut store, response);
@@ -33,7 +33,7 @@ pub fn response(response: reqwest::blocking::Response) -> Result<StoreUnion, Hat
 }
 
 pub fn store_from_response_body(
-    buffer: &mut HashMap<String, BodyContent>,
+    buffer: &mut HashMap<String, Content>,
     response: reqwest::blocking::Response,
 ) -> Result<(), HatError> {
     let text = response.text()?;
@@ -43,7 +43,7 @@ pub fn store_from_response_body(
         return Ok(());
     }
 
-    let content = BodyContent::new(text);
+    let content = Content::new(text);
     log::info!("STORE: {:#?}", &content);
 
     buffer.insert("body".to_string(), content);
@@ -56,15 +56,15 @@ mod internal {
 
     use crate::error::HatError;
     use crate::hat_util::StoreMap;
-    use crate::query::BodyContent;
+    use crate::query::Content;
 
     pub fn store_from_response(
-        buffer: &mut HashMap<String, BodyContent>,
+        buffer: &mut HashMap<String, Content>,
         response: &reqwest::blocking::Response,
     ) -> Result<(), HatError> {
         buffer.insert(
             "status".to_string(),
-            BodyContent::Plaintext(response.status().as_u16().to_string()),
+            Content::Plaintext(response.status().as_u16().to_string()),
         );
 
         let headers = response.headers();
@@ -87,7 +87,7 @@ mod internal {
 
         buffer.insert(
             "headers".to_string(),
-            BodyContent::Json(serde_json::to_string(&json)?),
+            Content::Json(serde_json::to_string(&json)?),
         );
 
         log::debug!("{:#?}", &buffer);

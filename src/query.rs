@@ -4,19 +4,19 @@ pub trait Queryable {
 
 #[allow(dead_code)]
 #[derive(Debug)]
-pub enum BodyContent {
+pub enum Content {
     Json(String),
     Xml(String),
     Plaintext(String),
 }
 
-impl Queryable for BodyContent {
+impl Queryable for Content {
     // pass in arbitrary filter to extract data from body
     // e.g. Json -> filter = ".posts.[0]"
     // e.g. Plaintext -> filter = "/\w+/g"
     fn query(&self, filter: &str) -> Option<String> {
         match self {
-            BodyContent::Json(json) => {
+            Content::Json(json) => {
                 let value = gjson::get(json, filter);
                 Some(match value.kind() {
                     gjson::Kind::Null => return None,
@@ -28,21 +28,21 @@ impl Queryable for BodyContent {
                     gjson::Kind::Object => todo!(),
                 })
             }
-            BodyContent::Xml(_) => todo!(),
-            BodyContent::Plaintext(text) => Some(text.to_owned()),
+            Content::Xml(_) => todo!(),
+            Content::Plaintext(text) => Some(text.to_owned()),
         }
     }
 }
 
-impl BodyContent {
+impl Content {
     pub fn new(content: String) -> Self {
         if gjson::valid(&content) {
-            return BodyContent::Json(content);
+            return Content::Json(content);
         }
 
         log::debug!("{}", content);
 
-        BodyContent::Plaintext(content)
+        Content::Plaintext(content)
     }
 }
 
@@ -79,20 +79,20 @@ mod test {
 
     #[test]
     fn basic_json_field_query() {
-        let content = BodyContent::new(test.to_string());
+        let content = Content::new(test.to_string());
         assert_eq!(content.query("message"), Some("Hello World".to_string()));
     }
 
     #[test]
     fn nested_json_field_query() {
-        let content = BodyContent::new(test.to_string());
+        let content = Content::new(test.to_string());
         assert_eq!(content.query("user.name"), Some("Isaac Adams".to_string()));
         assert_eq!(content.query("user.id"), Some("0".to_string()));
     }
 
     #[test]
     fn nested_json_array_query() {
-        let content = BodyContent::new(test.to_string());
+        let content = Content::new(test.to_string());
         assert_eq!(content.query("user.name"), Some("Isaac Adams".to_string()));
         assert_eq!(
             content.query("user.languages.1"),

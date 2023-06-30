@@ -3,7 +3,7 @@ use std::{collections::HashMap, slice::Iter};
 #[allow(dead_code)]
 pub enum StoreUnion {
     MapStringToJsonValue(StoreMap),
-    MapStringToBodyContent(HashMap<String, crate::query::BodyContent>),
+    MapStringToBodyContent(HashMap<String, crate::query::Content>),
 }
 
 impl Store for StoreUnion {
