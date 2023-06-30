@@ -1,4 +1,4 @@
-POST {{:base}}/posts
+POST {{base}}/posts
 Content-Type application/json
 
 [

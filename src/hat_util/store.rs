@@ -8,15 +8,6 @@ pub enum StoreUnion {
 
 impl Store for StoreUnion {
     fn fetch_value(&self, key: &str) -> Option<String> {
-        let mut is_literal = true;
-        let key = if key.starts_with(":") {
-            is_literal = false;
-            // remove the ':'
-            &key[1..]
-        } else {
-            key
-        };
-
         let value = match self {
             // key = r.headers.content-type
             StoreUnion::MapStringToJsonValue(s) => s.fetch_value(key).map(|v| v.to_string()),
@@ -25,19 +16,13 @@ impl Store for StoreUnion {
                 let mut iter = key.split(r#"|"#);
                 let key = iter.next()?.trim();
                 let filter = iter.next().or(Some(""))?.trim();
-                s.get(key)?.query(filter)
+                let content = s.get(key)?;
+
+                content.query(filter)
             }
         };
 
-        if is_literal {
-            value.map(|mut v| {
-                v.insert(0, '"');
-                v.push('"');
-                v
-            })
-        } else {
-            value
-        }
+        value
     }
 }
 
@@ -97,7 +82,17 @@ pub trait Store {
 
 impl Store for StoreMap {
     fn fetch_value(&self, key: &str) -> Option<String> {
-        self.get(key).map(|s| s.to_string())
+        self.get(key).and_then(|s| {
+            Some(match s {
+                serde_json::Value::Null => return None,
+                serde_json::Value::Bool(_) => todo!(),
+                serde_json::Value::Number(_) => todo!(),
+                serde_json::Value::String(s) => s.to_string(),
+                serde_json::Value::Array(_) => todo!(),
+                serde_json::Value::Object(_) => todo!(),
+            })
+        })
+        //.and_then(|s| Some(s.to_string()))
     }
 }
 
@@ -206,5 +201,12 @@ mod test {
 
         assert_eq!(key, "headers");
         assert_eq!(filter, "content-type");
+    }
+
+    #[test]
+    fn check_multiline() {
+        let multiline = r#"I am
+        multiline"#;
+        assert_eq!(multiline.lines().count(), 2);
     }
 }

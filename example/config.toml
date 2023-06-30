@@ -3,14 +3,14 @@ base = "http://localhost:5000"
 
 [[tests]]
 name = "status only, no headers or body"
-http = "GET {{:base}}/200"
+http = "GET {{base}}/200"
 assertions = """
 {{status}} == 200
 """
 
 [[tests]]
 name = "status + json body, no headers"
-http = "GET {{:base}}/message"
+http = "GET {{base}}/message"
 assertions = """
 {{status}} == 200
 {{body | message}} == "hello world!"
@@ -18,7 +18,7 @@ assertions = """
 
 [[tests]]
 name = "post message w/ header"
-http = "POST {{:base}}/message"
+http = "POST {{base}}/message"
 assertions = """
 {{status}} == 200
 {{body | id}} == 2
@@ -32,7 +32,7 @@ nextRoute = "{{body | next_route}}"
 
 [[tests]]
 name = "show example of querying arrays in response"
-http = "GET {{:base}}/{{:nextRoute}}"
+http = "GET {{base}}/{{nextRoute}}"
 assertions = """
 {{status}} == 200
 {{headers | content-length}} > 0
@@ -43,7 +43,7 @@ assertions = """
 
 [[tests]]
 name = "text body works"
-http = "GET {{:base}}/posts/1"
+http = "GET {{base}}/posts/1"
 assertions = """
 {{status}} == 200
 {{body}} == "how to build a CLI program in rust"

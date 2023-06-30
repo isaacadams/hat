@@ -2,6 +2,12 @@ pub trait Queryable {
     fn query(&self, filter: &str) -> Option<String>;
 }
 
+impl<Q: Queryable> crate::hat_util::Store for Q {
+    fn fetch_value(&self, key: &str) -> Option<String> {
+        self.query(key)
+    }
+}
+
 #[allow(dead_code)]
 #[derive(Debug)]
 pub enum Content {
@@ -15,15 +21,16 @@ impl Queryable for Content {
     // e.g. Json -> filter = ".posts.[0]"
     // e.g. Plaintext -> filter = "/\w+/g"
     fn query(&self, filter: &str) -> Option<String> {
+        log::debug!("{:#?}", &self);
         match self {
             Content::Json(json) => {
                 let value = gjson::get(json, filter);
                 Some(match value.kind() {
                     gjson::Kind::Null => return None,
-                    gjson::Kind::String => value.str().to_string(),
+                    gjson::Kind::String => value.to_string(),
                     gjson::Kind::False => todo!(),
                     gjson::Kind::True => todo!(),
-                    gjson::Kind::Number => todo!(),
+                    gjson::Kind::Number => value.str().to_string(),
                     gjson::Kind::Array => todo!(),
                     gjson::Kind::Object => todo!(),
                 })

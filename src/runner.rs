@@ -22,9 +22,7 @@ impl RequestExecutor for HatRunner {
 
 impl Store for HatRunner {
     fn fetch_value(&self, key: &str) -> Option<String> {
-        self.global
-            .iter()
-            .find_map(|s| s.fetch_value(key).map(|s| s.replace("\"", "")))
+        self.global.iter().find_map(|s| s.fetch_value(key))
     }
 }
 
