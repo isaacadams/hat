@@ -35,7 +35,7 @@ pub fn read<P: AsRef<Path>>(path: P) -> anyhow::Result<Config> {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
-    pub environment: HashMap<String, serde_json::Value>,
+    pub environment: HashMap<String, String>,
     pub tests: Vec<TestConfig>,
 }
 

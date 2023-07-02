@@ -12,6 +12,7 @@ mod runner;
 mod test;
 
 use clap::Parser;
+use query::Content;
 use runner::HatRunner;
 
 /// Simple program to greet a person
@@ -34,9 +35,15 @@ pub fn start() -> anyhow::Result<bool> {
 fn test(config_path: &str) -> anyhow::Result<bool> {
     let config = config::read(config_path)?;
 
+    let environment = config
+        .environment
+        .into_iter()
+        .map(|(key, value)| (key, Content::new(value)))
+        .collect();
+
     let mut iter = config.tests.into_iter();
     let mut runner = HatRunner::new(
-        hat_util::StoreUnion::MapStringToJsonValue(config.environment),
+        hat_util::StoreUnion::MapStringToBodyContent(environment),
         reqwest::blocking::Client::new(),
     );
     Ok(runner.test(&mut iter))

@@ -11,15 +11,15 @@ pub fn outputs<S: Store>(
     // ensure variables used in outputs are hydrated from the latest store
     // ?? evaluate the hydrated output content?
     // finally, assign it to the output key
-    let mut evaluated_outputs = StoreMap::default();
+    let mut evaluated_outputs = HashMap::<String, Content>::default();
     for (key, value) in outputs_from_config.into_iter() {
         let value = store.match_and_replace(&value);
-        evaluated_outputs.insert(key, serde_json::to_value(&value)?);
+        evaluated_outputs.insert(key, Content::new(value));
     }
 
     log::info!("OUTPUTS: {:#?}", evaluated_outputs);
 
-    Ok(StoreUnion::MapStringToJsonValue(evaluated_outputs))
+    Ok(StoreUnion::MapStringToBodyContent(evaluated_outputs))
 }
 
 pub fn response(response: reqwest::blocking::Response) -> Result<StoreUnion, HatError> {
