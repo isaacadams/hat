@@ -1,40 +1,27 @@
-pub trait Queryable {
-    fn query<'a>(&'a self, filter: &'a str) -> Option<Variable<'a>>;
-}
-
 pub enum Variable<'a> {
     Json(gjson::Value<'a>),
     Text(String),
 }
 
 impl Variable<'_> {
-    pub fn as_value(&self) -> &str {
+    pub fn as_value(&self) -> String {
         match self {
             Variable::Json(value) => match value.kind() {
                 gjson::Kind::Null => "null",
-                gjson::Kind::String => value.str(),
-                gjson::Kind::False => todo!(),
-                gjson::Kind::True => todo!(),
-                gjson::Kind::Number => value.str(),
-                gjson::Kind::Array => todo!(),
-                gjson::Kind::Object => todo!(),
+                _ => value.str(),
             },
             Variable::Text(x) => x,
         }
+        .to_string()
     }
 
-    pub fn as_literal(&self) -> &str {
+    pub fn as_literal(&self) -> String {
         match self {
             Variable::Json(value) => match value.kind() {
-                gjson::Kind::Null => todo!(),
-                gjson::Kind::False => todo!(),
-                gjson::Kind::Number => todo!(),
-                gjson::Kind::String => todo!(),
-                gjson::Kind::True => todo!(),
-                gjson::Kind::Array => todo!(),
-                gjson::Kind::Object => todo!(),
+                gjson::Kind::String => format!("\"{}\"", value.str()),
+                _ => self.as_value(),
             },
-            Variable::Text(x) => x,
+            Variable::Text(x) => format!("\"{}\"", x),
         }
     }
 }
@@ -47,11 +34,21 @@ pub enum Content {
     Plaintext(String),
 }
 
-impl Queryable for Content {
+impl Content {
+    pub fn new(content: String) -> Self {
+        if gjson::valid(&content) {
+            return Content::Json(content);
+        }
+
+        log::debug!("{}", content);
+
+        Content::Plaintext(content)
+    }
+
     // pass in arbitrary filter to extract data from body
     // e.g. Json -> filter = ".posts.[0]"
     // e.g. Plaintext -> filter = "/\w+/g"
-    fn query<'a>(&'a self, filter: &'a str) -> Option<Variable<'a>> {
+    pub fn query<'a>(&'a self, filter: &'a str) -> Option<Variable<'a>> {
         log::debug!("{:#?}", &self);
 
         match self {
@@ -63,17 +60,18 @@ impl Queryable for Content {
             Content::Plaintext(text) => Some(Variable::Text(text.to_string())),
         }
     }
-}
 
-impl Content {
-    pub fn new(content: String) -> Self {
-        if gjson::valid(&content) {
-            return Content::Json(content);
+    pub fn value(&self) -> Option<Variable<'_>> {
+        log::debug!("{:#?}", &self);
+
+        match self {
+            Content::Json(json) => {
+                let value = gjson::parse(json);
+                Some(Variable::Json(value))
+            }
+            Content::Xml(_) => todo!(),
+            Content::Plaintext(text) => Some(Variable::Text(text.to_string())),
         }
-
-        log::debug!("{}", content);
-
-        Content::Plaintext(content)
     }
 
     #[allow(dead_code)]
@@ -156,6 +154,16 @@ mod test {
 
         assert_eq!(query1.as_value(), "Isaac Adams");
         assert_eq!(query2.as_value(), "typescript");
+
+        Ok(())
+    }
+
+    #[test]
+    fn status_codes_as_json() -> Result<(), String> {
+        let content = Content::Json("200".to_string());
+        let query = content.value().ok_or("failed")?;
+
+        assert_eq!(query.as_value(), "200");
 
         Ok(())
     }

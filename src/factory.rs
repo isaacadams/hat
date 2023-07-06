@@ -13,7 +13,7 @@ pub fn outputs<S: Store>(
     // finally, assign it to the output key
     let mut evaluated_outputs = HashMap::<String, Content>::default();
     for (key, value) in outputs_from_config.into_iter() {
-        let value = store.match_and_replace(&value);
+        let value = store.match_and_replace(&value, |v| v.as_value().to_string());
         evaluated_outputs.insert(key, Content::new(value));
     }
 
@@ -63,7 +63,7 @@ mod internal {
     ) -> Result<(), HatError> {
         buffer.insert(
             "status".to_string(),
-            Content::Plaintext(response.status().as_u16().to_string()),
+            Content::Json(response.status().as_u16().to_string()),
         );
 
         let headers = response.headers();

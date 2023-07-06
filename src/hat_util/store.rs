@@ -1,4 +1,4 @@
-use crate::query::{Content, Queryable, Variable};
+use crate::query::{Content, Variable};
 use std::{collections::HashMap, slice::Iter};
 
 pub type ContentMap = HashMap<String, Content>;
@@ -15,10 +15,14 @@ impl Store for StoreUnion {
             StoreUnion::MapStringToContent(s) => {
                 let mut iter = key.split("|");
                 let key = iter.next()?.trim();
-                let filter = iter.next().or(Some(""))?.trim();
+
                 let content = s.get(key)?;
 
-                content.query(filter)
+                if let Some(filter) = iter.next() {
+                    content.query(filter.trim())
+                } else {
+                    content.value()
+                }
             }
         };
 
@@ -55,11 +59,11 @@ lazy_static::lazy_static! {
 pub trait Store {
     fn fetch_value<'a>(&'a self, key: &'a str) -> Option<Variable<'a>>;
 
-    fn match_and_replace(&self, hydrate: &str) -> String {
+    fn match_and_replace<F: Fn(Variable) -> String>(&self, hydrate: &str, render: F) -> String {
         let result = REGEX.replace_all(hydrate, |cap: &Captures| {
             let key = &cap[1];
             if let Some(x) = self.fetch_value(key) {
-                return x.as_value().to_string();
+                return render(x);
             }
 
             log::debug!("could not find {}, captures: {:#?}", key, &cap);
@@ -133,10 +137,11 @@ mod test {
 
         let store = StoreUnion::MapStringToContent(map);
 
-        let hydrated = store.match_and_replace("{{key}}");
+        let hydrated = store.match_and_replace("{{key}}", |v| v.as_literal().to_string());
         assert_eq!(hydrated, "\"value\"");
 
-        let hydrated = store.match_and_replace("{{bool}} == {{number}}");
+        let hydrated =
+            store.match_and_replace("{{bool}} == {{number}}", |v| v.as_value().to_string());
         assert_eq!(hydrated, "false == 123");
     }
 
@@ -151,10 +156,12 @@ mod test {
 
         let store = StoreUnion::MapStringToContent(map);
 
-        let hydrated = store.match_and_replace("{{r.headers.content-type}}");
+        let hydrated =
+            store.match_and_replace("{{r.headers.content-type}}", |v| v.as_literal().to_string());
         assert_eq!(hydrated, "\"application/json\"");
 
-        let hydrated = store.match_and_replace("{{header.status}} == 200");
+        let hydrated =
+            store.match_and_replace("{{header.status}} == 200", |v| v.as_value().to_string());
         assert_eq!(hydrated, "200 == 200");
     }
 
@@ -166,7 +173,9 @@ mod test {
 
         let store = StoreUnion::MapStringToContent(map);
 
-        let hydrated = store.match_and_replace("{{r.body.[0].title}} == \"hello world\"");
+        let hydrated = store.match_and_replace("{{r.body.[0].title}} == \"hello world\"", |v| {
+            v.as_literal().to_string()
+        });
         assert_eq!(hydrated, "\"hello world\" == \"hello world\"");
     }
 
