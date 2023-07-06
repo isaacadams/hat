@@ -21,14 +21,14 @@ cargo watch -c -w src -x 'test -- --nocapture --test test::v2'
 
 # Release
 
-- releases will have git tags associated with them
-- version label sync? cargo.toml version updated by the git tag or git tag update the cargo.toml version
-- action: Cross Platform Build -> on success, create release w/ tag using version on cargo.toml
-- save build artifacts w/ commit hash on push to PR or based on special branch naming
-- creating release off of main branch will use packages built on main@HEAD
+- change version in `Cargo.toml`
+- running `scripts/release.sh` will create a git tag based on the version number in `Cargo.toml` and push the tag
+- release workflow will kick off, generate cross platform binaries, and put everything into a github release
 
-- ? how to handle version in cargo.toml versus git tag version
-- ? where to handle `cargo publish`
+### TODO for Release
+
+- `cargo publish` on successful releases
+- implement CHANGELOG
 
 # Docs
 
@@ -109,11 +109,12 @@ impl Queryable for BodyContent {
 - add STATUS URL to test output after name
 - make global store aware of environment variables, and allow them to be used with {{env:...}} syntax
 - replace reqwest with hand rolled simple http client with (hopefully) zero dependencies
-- finish plan for how to release
-- exit codes
-  - if at least one test fails, should respond with failed exit code
+- ✅ finish plan for how to release
+- ✅ exit codes
+  - ✅ if at least one test fails, should respond with failed exit code
 - errors
-  - if error occurs within test, fail the test, keep running all the other tests and display error underneath failed test
+  - ✅ if error occurs within test, fail the test, keep running all the other tests
+  - display error underneath failed test
   - show failed test if it can't find specified `.http` file instead of panic
 - ✅ use new .http syntax that supports file path or raw
 - ✅ integrate config_v2
@@ -126,7 +127,7 @@ impl Queryable for BodyContent {
 - use the cli in a github action
 - ✅ abstract service to replace reqwest for offline testing
 - special syntax to build clients with base domain and auth
-- use a rust version of jq (https://github.com/MiSawa/xq or https://lib.rs/crates/jaq-parse)
+- ✅ use a rust version of jq (https://github.com/MiSawa/xq or https://lib.rs/crates/jaq-parse)
 - build lexer to find {{token}} and replace them with Store trait
 
 # Helpful Commands
