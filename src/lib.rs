@@ -43,7 +43,7 @@ fn test(config_path: &str) -> anyhow::Result<bool> {
 
     let mut iter = config.tests.into_iter();
     let mut runner = HatRunner::new(
-        hat_util::StoreUnion::MapStringToBodyContent(environment),
+        hat_util::StoreUnion::MapStringToContent(environment),
         reqwest::blocking::Client::new(),
     );
     Ok(runner.test(&mut iter))

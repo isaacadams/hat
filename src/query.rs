@@ -1,17 +1,48 @@
 pub trait Queryable {
-    fn query(&self, filter: &str) -> Option<String>;
+    fn query<'a>(&'a self, filter: &'a str) -> Option<Variable<'a>>;
 }
 
-impl<Q: Queryable> crate::hat_util::Store for Q {
-    fn fetch_value(&self, key: &str) -> Option<String> {
-        self.query(key)
+pub enum Variable<'a> {
+    Json(gjson::Value<'a>),
+    Text(String),
+}
+
+impl Variable<'_> {
+    pub fn as_value(&self) -> &str {
+        match self {
+            Variable::Json(value) => match value.kind() {
+                gjson::Kind::Null => "null",
+                gjson::Kind::String => value.str(),
+                gjson::Kind::False => todo!(),
+                gjson::Kind::True => todo!(),
+                gjson::Kind::Number => value.str(),
+                gjson::Kind::Array => todo!(),
+                gjson::Kind::Object => todo!(),
+            },
+            Variable::Text(x) => x,
+        }
+    }
+
+    pub fn as_literal(&self) -> &str {
+        match self {
+            Variable::Json(value) => match value.kind() {
+                gjson::Kind::Null => todo!(),
+                gjson::Kind::False => todo!(),
+                gjson::Kind::Number => todo!(),
+                gjson::Kind::String => todo!(),
+                gjson::Kind::True => todo!(),
+                gjson::Kind::Array => todo!(),
+                gjson::Kind::Object => todo!(),
+            },
+            Variable::Text(x) => x,
+        }
     }
 }
 
-#[allow(dead_code)]
 #[derive(Debug)]
 pub enum Content {
     Json(String),
+    #[allow(dead_code)]
     Xml(String),
     Plaintext(String),
 }
@@ -20,23 +51,16 @@ impl Queryable for Content {
     // pass in arbitrary filter to extract data from body
     // e.g. Json -> filter = ".posts.[0]"
     // e.g. Plaintext -> filter = "/\w+/g"
-    fn query(&self, filter: &str) -> Option<String> {
+    fn query<'a>(&'a self, filter: &'a str) -> Option<Variable<'a>> {
         log::debug!("{:#?}", &self);
+
         match self {
             Content::Json(json) => {
                 let value = gjson::get(json, filter);
-                Some(match value.kind() {
-                    gjson::Kind::Null => return None,
-                    gjson::Kind::String => value.to_string(),
-                    gjson::Kind::False => todo!(),
-                    gjson::Kind::True => todo!(),
-                    gjson::Kind::Number => value.str().to_string(),
-                    gjson::Kind::Array => todo!(),
-                    gjson::Kind::Object => todo!(),
-                })
+                Some(Variable::Json(value))
             }
             Content::Xml(_) => todo!(),
-            Content::Plaintext(text) => Some(text.to_owned()),
+            Content::Plaintext(text) => Some(Variable::Text(text.to_string())),
         }
     }
 }
@@ -51,10 +75,28 @@ impl Content {
 
         Content::Plaintext(content)
     }
+
+    #[allow(dead_code)]
+    pub fn parse_filter<F: FnOnce(&str) -> ()>(
+        key: &str,
+        found_key: F,
+        found_filter: F,
+    ) -> Option<()> {
+        let mut iter = key.split("|");
+
+        let key = iter.next()?.trim();
+        found_key(key);
+
+        let filter = iter.next()?.trim();
+        found_filter(filter);
+
+        Some(())
+    }
 }
 
 /// query a json value
 /// if the query hits a path that does not exist, this function returns "null"
+#[allow(dead_code)]
 pub fn parse<'a, 'b, I: Iterator<Item = &'a str>>(
     selector: &mut I,
     json: &'b serde_json::Value,
@@ -74,7 +116,7 @@ pub fn parse<'a, 'b, I: Iterator<Item = &'a str>>(
 mod test {
     use super::*;
 
-    const test: &str = r#"{ 
+    const TEST: &str = r#"{ 
         "message": "Hello World",
         "user": { 
             "id": 0, 
@@ -85,25 +127,36 @@ mod test {
     }"#;
 
     #[test]
-    fn basic_json_field_query() {
-        let content = Content::new(test.to_string());
-        assert_eq!(content.query("message"), Some("Hello World".to_string()));
+    fn basic_json_field_query() -> Result<(), String> {
+        let content = Content::new(TEST.to_string());
+        let query = content.query("message").ok_or("failed")?;
+
+        assert_eq!(query.as_value(), "Hello World");
+
+        Ok(())
     }
 
     #[test]
-    fn nested_json_field_query() {
-        let content = Content::new(test.to_string());
-        assert_eq!(content.query("user.name"), Some("Isaac Adams".to_string()));
-        assert_eq!(content.query("user.id"), Some("0".to_string()));
+    fn nested_json_field_query() -> Result<(), String> {
+        let content = Content::new(TEST.to_string());
+        let query1 = content.query("user.name").ok_or("failed")?;
+        let query2 = content.query("user.id").ok_or("failed")?;
+
+        assert_eq!(query1.as_value(), "Isaac Adams");
+        assert_eq!(query2.as_value(), "0");
+
+        Ok(())
     }
 
     #[test]
-    fn nested_json_array_query() {
-        let content = Content::new(test.to_string());
-        assert_eq!(content.query("user.name"), Some("Isaac Adams".to_string()));
-        assert_eq!(
-            content.query("user.languages.1"),
-            Some("typescript".to_string())
-        );
+    fn nested_json_array_query() -> Result<(), String> {
+        let content = Content::new(TEST.to_string());
+        let query1 = content.query("user.name").ok_or("failed")?;
+        let query2 = content.query("user.languages.1").ok_or("failed")?;
+
+        assert_eq!(query1.as_value(), "Isaac Adams");
+        assert_eq!(query2.as_value(), "typescript");
+
+        Ok(())
     }
 }

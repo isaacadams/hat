@@ -53,7 +53,7 @@ fn jq(input: &str, filter: &str) -> Vec<Result<Val, Error>> {
     out.collect()
 }
 
-const test_json: &str = r#"{ 
+const TEST_JSON: &str = r#"{ 
     "message": "Hello World",
     "user": {
         "id": 1,
@@ -77,7 +77,6 @@ const test_json: &str = r#"{
 #[test]
 fn v2() {
     use evalexpr::*;
-    use serde_json::Value as JsonValue;
 
     let mut context = HashMapContext::new();
     context.set_value("user.id".into(), 1.into()).unwrap(); // Do proper error handling here
@@ -91,5 +90,5 @@ fn v2() {
 
     //let json: serde_json::Value = test_json.parse().unwrap();
 
-    assert_eq!(gjson::get(test_json, "user.id").u8(), 1);
+    assert_eq!(gjson::get(TEST_JSON, "user.id").u8(), 1);
 }

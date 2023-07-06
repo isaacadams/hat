@@ -1,5 +1,5 @@
 use crate::error::HatError;
-use crate::hat_util::{Store, StoreMap, StoreUnion};
+use crate::hat_util::{Store, StoreUnion};
 use crate::query::Content;
 use std::collections::HashMap;
 
@@ -19,7 +19,7 @@ pub fn outputs<S: Store>(
 
     log::info!("OUTPUTS: {:#?}", evaluated_outputs);
 
-    Ok(StoreUnion::MapStringToBodyContent(evaluated_outputs))
+    Ok(StoreUnion::MapStringToContent(evaluated_outputs))
 }
 
 pub fn response(response: reqwest::blocking::Response) -> Result<StoreUnion, HatError> {
@@ -29,7 +29,7 @@ pub fn response(response: reqwest::blocking::Response) -> Result<StoreUnion, Hat
     let _ = internal::store_from_response(&mut store, &response);
     let _ = store_from_response_body(&mut store, response);
 
-    Ok(StoreUnion::MapStringToBodyContent(store))
+    Ok(StoreUnion::MapStringToContent(store))
 }
 
 pub fn store_from_response_body(
@@ -55,7 +55,6 @@ mod internal {
     use std::collections::HashMap;
 
     use crate::error::HatError;
-    use crate::hat_util::StoreMap;
     use crate::query::Content;
 
     pub fn store_from_response(
@@ -95,6 +94,7 @@ mod internal {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn parse(
         buffer: &mut Vec<(String, serde_json::Value)>,
         key: String,

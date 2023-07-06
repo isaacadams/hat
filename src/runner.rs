@@ -1,4 +1,7 @@
-use crate::hat_util::{Assert, RequestBuilder, RequestExecutor, Store, StoreUnion};
+use crate::{
+    hat_util::{Assert, RequestBuilder, RequestExecutor, Store, StoreUnion},
+    query::Variable,
+};
 
 pub type HatTestOutput = (Box<dyn Assert>, Option<StoreUnion>);
 
@@ -21,7 +24,7 @@ impl RequestExecutor for HatRunner {
 }
 
 impl Store for HatRunner {
-    fn fetch_value(&self, key: &str) -> Option<String> {
+    fn fetch_value<'a>(&'a self, key: &'a str) -> Option<Variable<'a>> {
         self.global.iter().find_map(|s| s.fetch_value(key))
     }
 }

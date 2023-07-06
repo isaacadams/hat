@@ -7,7 +7,7 @@ pub use {
     endpoint::Endpoint,
     error::UtilError,
     request_builder::RequestBuilder,
-    store::{Store, StoreComposed, StoreMap, StoreUnion},
+    store::{Store, StoreComposed, StoreUnion},
 };
 
 pub trait Assert {

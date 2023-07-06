@@ -1,19 +1,19 @@
+use crate::query::{Content, Queryable, Variable};
 use std::{collections::HashMap, slice::Iter};
+
+pub type ContentMap = HashMap<String, Content>;
 
 #[allow(dead_code)]
 pub enum StoreUnion {
-    MapStringToJsonValue(StoreMap),
-    MapStringToBodyContent(HashMap<String, crate::query::Content>),
+    MapStringToContent(ContentMap),
 }
 
 impl Store for StoreUnion {
-    fn fetch_value(&self, key: &str) -> Option<String> {
+    fn fetch_value<'a>(&'a self, key: &'a str) -> Option<Variable<'_>> {
         let value = match self {
-            // key = r.headers.content-type
-            StoreUnion::MapStringToJsonValue(s) => s.fetch_value(key).map(|v| v.to_string()),
             // key = headers | content-type
-            StoreUnion::MapStringToBodyContent(s) => {
-                let mut iter = key.split(r#"|"#);
+            StoreUnion::MapStringToContent(s) => {
+                let mut iter = key.split("|");
                 let key = iter.next()?.trim();
                 let filter = iter.next().or(Some(""))?.trim();
                 let content = s.get(key)?;
@@ -38,35 +38,32 @@ impl<'a, 'b, A: Store, B: Store> StoreComposed<'a, 'b, A, B> {
 }
 
 impl<'a, 'b, A: Store, B: Store> Store for StoreComposed<'a, 'b, A, B> {
-    fn fetch_value(&self, key: &str) -> Option<String> {
+    fn fetch_value<'c>(&'c self, key: &'c str) -> Option<Variable<'c>> {
         self.store_1
             .fetch_value(key)
             .or(self.store_2.fetch_value(key))
     }
 }
 
-pub type StoreMap = HashMap<String, serde_json::Value>;
-
 use regex::{Captures, Regex};
 
-use crate::query::Queryable;
 const PATTERN: &str = r#"\{\{(.*?)}\}"#;
 lazy_static::lazy_static! {
     static ref REGEX: Regex = Regex::new(PATTERN).expect("pattern is invalid");
 }
 
 pub trait Store {
-    fn fetch_value(&self, key: &str) -> Option<String>;
+    fn fetch_value<'a>(&'a self, key: &'a str) -> Option<Variable<'a>>;
 
     fn match_and_replace(&self, hydrate: &str) -> String {
         let result = REGEX.replace_all(hydrate, |cap: &Captures| {
             let key = &cap[1];
             if let Some(x) = self.fetch_value(key) {
-                x
-            } else {
-                log::debug!("could not find {}", key);
-                format!("{{{{{}}}}}", key)
+                return x.as_value().to_string();
             }
+
+            log::debug!("could not find {}, captures: {:#?}", key, &cap);
+            format!("{{{{{}}}}}", key)
         });
 
         result.into_owned()
@@ -80,24 +77,8 @@ pub trait Store {
     }
 }
 
-impl Store for StoreMap {
-    fn fetch_value(&self, key: &str) -> Option<String> {
-        self.get(key).and_then(|s| {
-            Some(match s {
-                serde_json::Value::Null => return None,
-                serde_json::Value::Bool(_) => todo!(),
-                serde_json::Value::Number(_) => todo!(),
-                serde_json::Value::String(s) => s.to_string(),
-                serde_json::Value::Array(_) => todo!(),
-                serde_json::Value::Object(_) => todo!(),
-            })
-        })
-        //.and_then(|s| Some(s.to_string()))
-    }
-}
-
 impl<T: Store> Store for Iter<'_, &T> {
-    fn fetch_value(&self, key: &str) -> Option<String> {
+    fn fetch_value<'a>(&'a self, key: &'a str) -> Option<Variable<'a>> {
         for s in self.as_ref() {
             let value = s.fetch_value(key);
             if value.is_some() {
@@ -113,11 +94,8 @@ impl<T: Store> Store for Iter<'_, &T> {
 mod test {
     use super::*;
 
-    pub fn parse(value: &str) -> serde_json::Value {
-        match serde_json::from_str(value) {
-            Ok(v) => v,
-            Err(_) => serde_json::to_value(value).unwrap_or(serde_json::Value::Null),
-        }
+    pub fn parse(value: &str) -> Content {
+        Content::new(value.to_string())
     }
 
     /* #[test]
@@ -148,12 +126,12 @@ mod test {
 
     #[test]
     fn variable_replacement_works() {
-        let mut map = StoreMap::new();
+        let mut map = ContentMap::new();
         map.insert("key".to_string(), self::parse("value"));
         map.insert("number".to_string(), self::parse("123"));
         map.insert("bool".to_string(), self::parse("false"));
 
-        let store = StoreUnion::MapStringToJsonValue(map);
+        let store = StoreUnion::MapStringToContent(map);
 
         let hydrated = store.match_and_replace("{{key}}");
         assert_eq!(hydrated, "\"value\"");
@@ -164,14 +142,14 @@ mod test {
 
     #[test]
     fn json_variable_replacement_works() {
-        let mut map = StoreMap::new();
+        let mut map = ContentMap::new();
         map.insert("header.status".to_string(), self::parse("200"));
         map.insert(
             "r.headers.content-type".to_string(),
             self::parse("application/json"),
         );
 
-        let store = StoreUnion::MapStringToJsonValue(map);
+        let store = StoreUnion::MapStringToContent(map);
 
         let hydrated = store.match_and_replace("{{r.headers.content-type}}");
         assert_eq!(hydrated, "\"application/json\"");
@@ -182,11 +160,11 @@ mod test {
 
     #[test]
     fn json_array_variable_replacement_works() {
-        let mut map = StoreMap::new();
+        let mut map = ContentMap::new();
 
         map.insert("r.body.[0].title".to_string(), self::parse("hello world"));
 
-        let store = StoreUnion::MapStringToJsonValue(map);
+        let store = StoreUnion::MapStringToContent(map);
 
         let hydrated = store.match_and_replace("{{r.body.[0].title}} == \"hello world\"");
         assert_eq!(hydrated, "\"hello world\" == \"hello world\"");
