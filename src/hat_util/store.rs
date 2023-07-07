@@ -51,7 +51,7 @@ impl<'a, 'b, A: Store, B: Store> Store for StoreComposed<'a, 'b, A, B> {
 
 use regex::{Captures, Regex};
 
-const PATTERN: &str = r#"\{\{(.*?)}\}"#;
+const PATTERN: &str = r"\{\{(.*?)}\}";
 lazy_static::lazy_static! {
     static ref REGEX: Regex = Regex::new(PATTERN).expect("pattern is invalid");
 }
