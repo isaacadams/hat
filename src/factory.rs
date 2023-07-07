@@ -23,11 +23,16 @@ pub fn outputs<S: Store>(
 }
 
 pub fn response(response: reqwest::blocking::Response) -> Result<StoreUnion, HatError> {
-    //let mut store = StoreMap::default();
     let mut store = HashMap::<String, Content>::default();
 
-    let _ = internal::store_from_response(&mut store, &response);
-    let _ = store_from_response_body(&mut store, response);
+    let response_header = internal::store_from_response(&mut store, &response);
+    if response_header.is_err() {
+        log::error!("{:?}", response_header);
+    }
+    let response_body = store_from_response_body(&mut store, response);
+    if response_body.is_err() {
+        log::error!("{:?}", response_header);
+    }
 
     Ok(StoreUnion::MapStringToContent(store))
 }
@@ -52,15 +57,14 @@ pub fn store_from_response_body(
 }
 
 mod internal {
-    use std::collections::HashMap;
-
-    use crate::error::HatError;
     use crate::query::Content;
+    use anyhow::Context;
+    use std::collections::HashMap;
 
     pub fn store_from_response(
         buffer: &mut HashMap<String, Content>,
         response: &reqwest::blocking::Response,
-    ) -> Result<(), HatError> {
+    ) -> anyhow::Result<()> {
         buffer.insert(
             "status".to_string(),
             Content::Json(response.status().as_u16().to_string()),
@@ -72,24 +76,25 @@ mod internal {
             return Ok(());
         }
 
-        let mut json = HashMap::<String, String>::default();
+        let mut json = json::JsonValue::new_object();
 
         for (key, value) in headers.iter().filter(|(_, v)| !v.is_empty()) {
-            json.insert(
-                key.to_string(),
-                value
-                    .to_str()
-                    .map_err(|e| HatError::ParsingError(e.to_string()))?
-                    .to_string(),
-            );
+            let value = value
+                .to_str()
+                .with_context(|| format!("failed to stringify '{:?}'", value))?;
+
+            // json::parse(...) will convert a "100" -> 100 in json
+            // but will fail to parse a "hello world" -> \"hello world\" because it expects the double quote to be contained within the value
+            // so first try json::parse(..) to correctly parse booleans, numbers, etc., then treat everything else like a string.
+            let value = json::parse(value).unwrap_or(value.into());
+
+            json[key.to_string()] = value;
         }
 
-        buffer.insert(
-            "headers".to_string(),
-            Content::Json(serde_json::to_string(&json)?),
-        );
+        let json = json.dump();
+        buffer.insert("headers".to_string(), Content::Json(json));
 
-        log::debug!("{:#?}", &buffer);
+        log::debug!("HEADERS: {:#?}", &buffer);
 
         Ok(())
     }

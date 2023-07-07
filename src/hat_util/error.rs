@@ -2,8 +2,6 @@
 pub enum UtilError {
     #[error("{0} is not a valid rest method")]
     InvalidRestMethod(String),
-    #[error("selector was not found: {0}")]
-    InvalidSelector(String),
     #[error("{0}")]
     InvalidUrl(String),
     #[error("{0}")]

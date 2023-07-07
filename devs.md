@@ -129,6 +129,7 @@ impl Queryable for BodyContent {
 - special syntax to build clients with base domain and auth
 - ✅ use a rust version of jq (https://github.com/MiSawa/xq or https://lib.rs/crates/jaq-parse)
 - build lexer to find {{token}} and replace them with Store trait
+- remove dependency on serde_json
 
 # Helpful Commands
 
@@ -148,3 +149,5 @@ cargo tree --target=x86_64-unknown-linux-musl -i openssl-sys | grep open
 # Missing Tests
 
 - bad connection
+- trycmd
+- ensure that variables are rendered in assertions correctly

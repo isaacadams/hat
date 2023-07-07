@@ -3,12 +3,6 @@ use serde_json::{json, Value};
 use std::str::FromStr;
 
 #[test]
-fn test() {
-    println!("{}", "hello world");
-    println!("{}", serde_json::Value::from("hello world"));
-}
-
-#[test]
 fn jq_test() {
     let input = r#"["Hello", "world"]"#;
     let filter = ".[]";
@@ -87,8 +81,6 @@ fn v2() {
         Ok(Value::from(6))
     );
     assert_eq!(eval_with_context("user.id", &context), Ok(Value::from(1)));
-
-    //let json: serde_json::Value = test_json.parse().unwrap();
 
     assert_eq!(gjson::get(TEST_JSON, "user.id").u8(), 1);
 }

@@ -34,6 +34,7 @@ lazy_static = "1.4.0"
 toml = "0.7.4"
 gjson = "0.8.1"
 env_logger = "0.10.0"
+json = "0.12.4"
 
 
 [dev-dependencies]

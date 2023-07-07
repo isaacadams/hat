@@ -167,4 +167,16 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn headers_as_json() -> Result<(), String> {
+        let content = Content::Json(
+            "{\"content-length\":\"175\",\"date\":\"Thu, 06 Jul 2023 22:07:07 GMT\"}".to_string(),
+        );
+        let query = content.query("content-length").ok_or("failed")?;
+
+        assert_eq!(query.as_value(), "175");
+
+        Ok(())
+    }
 }
