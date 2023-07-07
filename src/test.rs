@@ -3,12 +3,6 @@ use serde_json::{json, Value};
 use std::str::FromStr;
 
 #[test]
-fn test() {
-    println!("{}", "hello world");
-    println!("{}", serde_json::Value::from("hello world"));
-}
-
-#[test]
 fn jq_test() {
     let input = r#"["Hello", "world"]"#;
     let filter = ".[]";
@@ -51,4 +45,42 @@ fn jq(input: &str, filter: &str) -> Vec<Result<Val, Error>> {
     let out = f.run(Ctx::new([], &inputs), Val::from(input));
 
     out.collect()
+}
+
+const TEST_JSON: &str = r#"{ 
+    "message": "Hello World",
+    "user": {
+        "id": 1,
+        "name": "Isaac Adams", 
+        "username": "iadams" 
+    },
+    "posts": [
+        {
+            "id": 0,
+            "title": "post #1",
+            "content": "hello world"
+        },
+        {
+            "id": 1,
+            "title": "post #2",
+            "content": "hello, again"
+        }
+    ]
+}"#;
+
+#[test]
+fn v2() {
+    use evalexpr::*;
+
+    let mut context = HashMapContext::new();
+    context.set_value("user.id".into(), 1.into()).unwrap(); // Do proper error handling here
+    context.set_value("two".into(), 2.into()).unwrap(); // Do proper error handling here
+    context.set_value("three".into(), 3.into()).unwrap(); // Do proper error handling here
+    assert_eq!(
+        eval_with_context("user.id + two + three", &context),
+        Ok(Value::from(6))
+    );
+    assert_eq!(eval_with_context("user.id", &context), Ok(Value::from(1)));
+
+    assert_eq!(gjson::get(TEST_JSON, "user.id").u8(), 1);
 }
