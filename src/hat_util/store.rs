@@ -13,7 +13,7 @@ impl Store for StoreUnion {
         let value = match self {
             // key = headers | content-type
             StoreUnion::MapStringToContent(s) => {
-                let mut iter = key.split("|");
+                let mut iter = key.split('|');
                 let key = iter.next()?.trim();
 
                 let content = s.get(key)?;

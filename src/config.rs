@@ -64,7 +64,7 @@ fn build<T: Store + RequestExecutor>(
     // can either be a path to an .http file or the raw http request
     let http_contents = crate::http_file_parser::get_contents(hat_test_config.http)?;
     // replace variables in raw http request
-    let http_contents = hat.match_and_replace(http_contents.as_str(), |v| v.as_value().to_string());
+    let http_contents = hat.match_and_replace(http_contents.as_str(), |v| v.as_value());
     log::debug!("HTTP: {}", &http_contents);
 
     // parses the raw http request into something the http client can use
@@ -79,8 +79,8 @@ fn build<T: Store + RequestExecutor>(
     let response_store = factory::response(response)?;
     let store_composed = hat.compose(&response_store);
 
-    let assertions = store_composed
-        .match_and_replace(&hat_test_config.assertions, |v| v.as_literal().to_string());
+    let assertions =
+        store_composed.match_and_replace(&hat_test_config.assertions, |v| v.as_literal());
     let assert = assertion::new(hat_test_config.name, assertions);
 
     let outputs = match hat_test_config.outputs {

@@ -75,12 +75,8 @@ impl Content {
     }
 
     #[allow(dead_code)]
-    pub fn parse_filter<F: FnOnce(&str) -> ()>(
-        key: &str,
-        found_key: F,
-        found_filter: F,
-    ) -> Option<()> {
-        let mut iter = key.split("|");
+    pub fn parse_filter<F: FnOnce(&str)>(key: &str, found_key: F, found_filter: F) -> Option<()> {
+        let mut iter = key.split('|');
 
         let key = iter.next()?.trim();
         found_key(key);
