@@ -96,7 +96,7 @@ This tool aims to support most cases by making the data in those body formats av
 
 - add STATUS URL to test output after name
 - make global store aware of environment variables, and allow them to be used with {{env:...}} syntax
-- replace reqwest with hand rolled simple http client with (hopefully) zero dependencies
+- ✅ replace reqwest with hand rolled simple http client with (hopefully) zero dependencies
 - ✅ finish plan for how to release
 - ✅ exit codes
   - ✅ if at least one test fails, should respond with failed exit code

@@ -1,9 +1,9 @@
-use crate::hat_util::{RequestExecutor, Store};
+use crate::hat_util::Store;
 use crate::{
     assertion,
     error::HatError,
     factory,
-    runner::{HatTestBuilder, HatTestOutput},
+    runner::{HatTestBuilder, HatTestOutput, RequestExecutor},
 };
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
@@ -70,7 +70,7 @@ fn build<T: Store + RequestExecutor>(
     // parses the raw http request into something the http client can use
     let request = crate::http_file_parser::parse(http_contents.as_str())?;
     let response = hat.execute(request)?;
-    log::info!("{} {}", response.status(), response.url());
+    log::info!("{} {}", response.status(), response.get_url());
     log::debug!("{:#?}", &response);
 
     // these stores contain the data from the response headers and body

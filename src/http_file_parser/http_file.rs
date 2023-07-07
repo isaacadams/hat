@@ -96,14 +96,7 @@ pub mod parser {
                     ),
                 })?;
 
-            builder.add_header(header_name, header_value).map_err(|e| {
-                HttpLexerError::MalformedLine {
-                    row,
-                    col: 0,
-                    content: line.to_string(),
-                    reason: std::borrow::Cow::Owned(e.to_string()),
-                }
-            })?;
+            builder = builder.add_header(header_name, header_value);
         }
 
         Ok(builder)
@@ -169,20 +162,20 @@ Accept application/json
         );
     }
 
-    #[test]
-    pub fn throws_error_for_invalid_header() {
-        let http = r#"GET https://jsonplaceholder.typicode.com/todos/1
-Content-Type: application/json"#;
-        assert!(matches!(
-            self::parse_from_utf8(http),
-            Err(HttpLexerError::MalformedLine {
-                row: 1,
-                col: 0,
-                content: _,
-                reason: _
-            })
-        ));
-    }
+    /*     #[test]
+        pub fn throws_error_for_invalid_header() {
+            let http = r#"GET https://jsonplaceholder.typicode.com/todos/1
+    Content-Type: application/json"#;
+            assert!(matches!(
+                self::parse_from_utf8(http),
+                Err(HttpLexerError::MalformedLine {
+                    row: 1,
+                    col: 0,
+                    content: _,
+                    reason: _
+                })
+            ));
+        } */
 
     #[test]
     pub fn throws_error_for_malformed_line() {

@@ -1,5 +1,6 @@
 use crate::{
-    hat_util::{Assert, RequestBuilder, RequestExecutor, Store, StoreUnion},
+    error::HatError,
+    hat_util::{Assert, RequestBuilder, Store, StoreUnion},
     query::Variable,
 };
 
@@ -9,17 +10,27 @@ pub trait HatTestBuilder {
     fn build<T: Store + RequestExecutor>(self, global: &T) -> anyhow::Result<HatTestOutput>;
 }
 
+pub trait RequestExecutor {
+    fn execute(&self, request: RequestBuilder) -> Result<ureq::Response, HatError>;
+}
+
 pub struct HatRunner {
     global: Vec<StoreUnion>,
-    client: reqwest::blocking::Client,
+    client: ureq::Agent,
 }
 
 impl RequestExecutor for HatRunner {
-    fn execute(
-        &self,
-        request: RequestBuilder,
-    ) -> Result<crate::hat_util::HttpResponse, crate::hat_util::HttpError> {
-        request.build(&self.client).send()
+    fn execute(&self, request: RequestBuilder) -> Result<ureq::Response, HatError> {
+        let (builder, endpoint, body) = request.split();
+        let ureq_request = RequestBuilder::build(builder, endpoint, &self.client)
+            .ok_or(HatError::RequestBuilder)?;
+
+        if let Some(body) = body {
+            ureq_request.send_string(&body)
+        } else {
+            ureq_request.call()
+        }
+        .map_err(|e| HatError::HttpResponse(e.to_string()))
     }
 }
 
@@ -30,7 +41,7 @@ impl Store for HatRunner {
 }
 
 impl HatRunner {
-    pub fn new(global: StoreUnion, client: reqwest::blocking::Client) -> Self {
+    pub fn new(global: StoreUnion, client: ureq::Agent) -> Self {
         Self {
             global: vec![global],
             client,

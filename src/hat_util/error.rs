@@ -6,10 +6,4 @@ pub enum UtilError {
     InvalidUrl(String),
     #[error("{0}")]
     IO(#[from] std::io::Error),
-    #[error("{0}")]
-    Reqwest(#[from] reqwest::Error),
-    #[error("{0:#?}")]
-    InvalidHeaderName(#[from] reqwest::header::InvalidHeaderName),
-    #[error("{0:#?}")]
-    InvalidHeaderValue(#[from] reqwest::header::InvalidHeaderValue),
 }

@@ -1,32 +1,32 @@
 use super::{error::UtilError, UtilResult};
+use http::Method as HttpMethod;
 use std::str::FromStr;
 
 #[derive(Debug)]
 pub struct Endpoint {
-    url: reqwest::Url,
-    method: reqwest::Method,
+    url: url::Url,
+    method: (String, HttpMethod),
 }
 
 impl Endpoint {
-    fn parse_method(method: &str) -> UtilResult<reqwest::Method> {
-        use reqwest::Method;
+    fn parse_method(method: &str) -> UtilResult<(String, HttpMethod)> {
         let method = method.to_lowercase();
-        let method = match method.as_ref() {
-            "get" => Method::GET,
-            "post" => Method::POST,
-            "put" => Method::PUT,
-            "patch" => Method::PATCH,
-            "delete" => Method::DELETE,
-            "head" => Method::HEAD,
-            "options" => Method::OPTIONS,
+        let http_method = match method.as_ref() {
+            "get" => HttpMethod::GET,
+            "post" => HttpMethod::POST,
+            "put" => HttpMethod::PUT,
+            "patch" => HttpMethod::PATCH,
+            "delete" => HttpMethod::DELETE,
+            "head" => HttpMethod::HEAD,
+            "options" => HttpMethod::OPTIONS,
             _ => return Err(UtilError::InvalidRestMethod(method)),
         };
 
-        Ok(method)
+        Ok((method, http_method))
     }
 
-    fn parse_url(url: &str) -> UtilResult<reqwest::Url> {
-        match reqwest::Url::from_str(url) {
+    fn parse_url(url: &str) -> UtilResult<url::Url> {
+        match url::Url::from_str(url) {
             Ok(u) => Ok(u),
             Err(e) => Err(UtilError::InvalidUrl(format!(
                 "url failed: '{}'\nreason: {}",
@@ -41,8 +41,8 @@ impl Endpoint {
         Ok(Self { url, method })
     }
 
-    pub fn builder(self, client: &reqwest::blocking::Client) -> reqwest::blocking::RequestBuilder {
-        client.request(self.method, self.url)
+    pub fn builder(&self, builder: http::request::Builder) -> http::request::Builder {
+        builder.method(&self.method.1).uri(&self.url.to_string())
     }
 }
 
@@ -58,7 +58,7 @@ mod test {
             assert!(Endpoint::new(url, m.to_uppercase().as_ref()).is_ok());
         }
 
-        assert_eq!(Endpoint::parse_method("get")?, reqwest::Method::GET);
+        assert_eq!(Endpoint::parse_method("get")?.1, HttpMethod::GET);
 
         assert!(matches!(
             Endpoint::new(url, "invalid"),
