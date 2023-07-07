@@ -48,11 +48,18 @@ cargo watch -c -w src -x 'test -- --nocapture --test test::v2'
     - simple method + url: `<METHOD> <URL>` e.g. GET https://google.com
     - use an .http file and point to it: `path/to/my-http-request.http`
   - `assertions`: define your expectations by querying the response data and using bit operations (==, >, <, !=, etc.)
-    - e.g. check the response status `{{r.status}} == 200`
-    - e.g. check the response content length `{{r.headers.content-length}} > 0`
-    - e.g. check the response content length `"{{r.body.post}}" == "I am a post"`
+    - e.g. check the response status `{{ status }} == 200`
+    - e.g. check the response content length `{{ headers | content-length }} > 0`
+    - e.g. check the response content length `{{ body | post }} == "I am a post"`
   - `outputs`: define the outputs of the test for use in any following test
-    - e.g. `{{post}} = {{r.body.post}}`
+
+```toml
+# example of defining a test output(s)
+[tests.outputs]
+contentLength = "{{headers | content-length}}"
+post = "{{body | post}}"
+```
+
 - Multi Step Test
   - can define outputs to be used in the next step
   - outputs cannot be used in the step they are defined
@@ -63,29 +70,10 @@ Response bodies can exist in multiple format kinds, such as xml, json, plain tex
 
 This tool aims to support most cases by making the data in those body formats available to be queried in assertions and passed as an output to be used in later tests.
 
-| format | data type | data                               | query        | result        |
-| ------ | --------- | ---------------------------------- | ------------ | ------------- |
-| json   | array     | `{ "posts": [ "I am a post" ] }`   | `.posts.[0]` | "I am a post" |
-| json   | object    | `{ "id": 0, post: "I am a post" }` | `.id`        | 0             |
-
-```rust
-trait Queryable {
-  fn query(filter: &str) -> String;
-}
-
-enum BodyContent {
-  Json(serde_json::Value),
-  Xml(String),
-  Plaintext(String)
-}
-
-impl Queryable for BodyContent {
-  // pass in arbitrary filter to extract data from body
-  // e.g. Json -> filter = ".posts.[0]"
-  // e.g. Plaintext -> filter = "/\w+/g"
-  pub fn query(filter: &str) -> String;
-}
-```
+| format | data type | data                               | query     | result        |
+| ------ | --------- | ---------------------------------- | --------- | ------------- |
+| json   | array     | `{ "posts": [ "I am a post" ] }`   | `posts.0` | "I am a post" |
+| json   | object    | `{ "id": 0, post: "I am a post" }` | `id`      | 0             |
 
 # Done
 
