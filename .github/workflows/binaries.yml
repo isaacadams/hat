@@ -39,6 +39,8 @@ jobs:
             os: windows-latest
             cross: false
     runs-on: ${{ matrix.os || 'ubuntu-latest' }}
+    outputs:
+      asset: ${{ steps.archive.outputs.asset }}
     env:
       # For some builds, we use cross to test on 32-bit and big-endian
       # systems.
@@ -85,7 +87,7 @@ jobs:
       - name: cargo build
         run: ${{ env.CARGO }} build ${{ env.BUILD_FLAGS }}
 
-      - name: Build archive
+      - name: archive
         shell: bash
         run: |
           package="${{ env.CLI_NAME }}-${{ needs.create-release.outputs.release_version }}-${{ matrix.target }}"
@@ -98,14 +100,14 @@ jobs:
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             cp "${{ env.TARGET_DIR }}/release/${{ env.CLI_NAME }}.exe" "$package/"
             7z a "$package.zip" "$package"
-            echo "ASSET=$package.zip" >> $GITHUB_ENV
+            echo "asset=$package.zip" >> $GITHUB_OUTPUT
           else
             cp "${{ env.TARGET_DIR }}/release/${{ env.CLI_NAME }}" "$package/"
             tar czf "$package.tar.gz" "$package"
-            echo "ASSET=$package.tar.gz" >> $GITHUB_ENV
+            echo "asset=$package.tar.gz" >> $GITHUB_OUTPUT
           fi
 
       - name: echo
         run: |
           echo $GITHUB_ENV
-          echo $GITHUB_OUTPUT
+          echo ${{ needs.create-binaries.outputs.asset }}
