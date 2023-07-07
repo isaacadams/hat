@@ -1,11 +1,10 @@
-use super::{Endpoint, HttpClient, UtilError};
-use reqwest::header::HeaderMap;
+use super::{Endpoint, UtilError};
 
 #[derive(Debug)]
 pub struct RequestBuilder {
     endpoint: Endpoint,
-    headers: HeaderMap,
     body: Option<String>,
+    inner: http::request::Builder,
 }
 
 impl RequestBuilder {
@@ -16,17 +15,14 @@ impl RequestBuilder {
     pub fn from_endpoint(endpoint: Endpoint) -> Self {
         Self {
             endpoint,
-            headers: HeaderMap::new(),
             body: None,
+            inner: http::request::Builder::new(),
         }
     }
 
-    pub fn add_header(&mut self, name: &str, value: &str) -> Result<(), UtilError> {
-        let name = reqwest::header::HeaderName::from_lowercase(name.to_lowercase().as_bytes())?;
-        let value = value.parse()?;
-        self.headers.insert(name, value);
-
-        Ok(())
+    pub fn add_header(mut self, name: &str, value: &str) -> Self {
+        self.inner = self.inner.header(name, value);
+        self
     }
 
     pub fn add_body(&mut self, body: String) {
@@ -38,8 +34,12 @@ impl RequestBuilder {
         self.body.is_some()
     }
 
+    #[allow(dead_code)]
     pub fn has_headers(&self) -> bool {
-        !self.headers.is_empty()
+        match self.inner.headers_ref() {
+            Some(headers) => !headers.is_empty(),
+            None => false,
+        }
     }
 
     #[allow(dead_code)]
@@ -47,18 +47,37 @@ impl RequestBuilder {
         self.body
     }
 
-    pub fn build(self, client: &HttpClient) -> reqwest::blocking::RequestBuilder {
-        let has_headers = self.has_headers();
-        let mut builder = self.endpoint.builder(client);
+    pub fn split(self) -> (http::request::Builder, Endpoint, Option<String>) {
+        (self.inner, self.endpoint, self.body)
+    }
 
-        if has_headers {
-            builder = builder.headers(self.headers);
+    pub fn build(
+        mut builder: http::request::Builder,
+        endpoint: Endpoint,
+        client: &ureq::Agent,
+    ) -> Option<ureq::Request> {
+        builder = endpoint.builder(builder);
+
+        let mut ureq_request = client.request(
+            builder.method_ref().map(|m| m.as_str())?,
+            &builder.uri_ref().map(|u| u.to_string())?,
+        );
+
+        if let Some(headers) = builder.headers_ref() {
+            ureq_request = headers
+                .iter()
+                .filter_map(|header| {
+                    header
+                        .1
+                        .to_str()
+                        .ok()
+                        .map(|str_value| (header.0.as_str(), str_value))
+                })
+                .fold(ureq_request, |request, header| {
+                    request.set(header.0, header.1)
+                });
         }
 
-        if let Some(b) = self.body {
-            builder.body(b)
-        } else {
-            builder
-        }
+        Some(ureq_request)
     }
 }

@@ -22,7 +22,7 @@ pub fn outputs<S: Store>(
     Ok(StoreUnion::MapStringToContent(evaluated_outputs))
 }
 
-pub fn response(response: reqwest::blocking::Response) -> Result<StoreUnion, HatError> {
+pub fn response(response: ureq::Response) -> Result<StoreUnion, HatError> {
     let mut store = HashMap::<String, Content>::default();
 
     let response_header = internal::store_from_response(&mut store, &response);
@@ -39,9 +39,15 @@ pub fn response(response: reqwest::blocking::Response) -> Result<StoreUnion, Hat
 
 pub fn store_from_response_body(
     buffer: &mut HashMap<String, Content>,
-    response: reqwest::blocking::Response,
+    response: ureq::Response,
 ) -> Result<(), HatError> {
-    let text = response.text()?;
+    log::debug!(
+        "BODY INFO: {} {}",
+        response.content_type(),
+        response.charset()
+    );
+
+    let text = response.into_string()?;
     log::info!("BODY: {}", &text);
 
     if text.is_empty() {
@@ -58,19 +64,18 @@ pub fn store_from_response_body(
 
 mod internal {
     use crate::query::Content;
-    use anyhow::Context;
     use std::collections::HashMap;
 
     pub fn store_from_response(
         buffer: &mut HashMap<String, Content>,
-        response: &reqwest::blocking::Response,
+        response: &ureq::Response,
     ) -> anyhow::Result<()> {
         buffer.insert(
             "status".to_string(),
-            Content::Json(response.status().as_u16().to_string()),
+            Content::Json(response.status().to_string()),
         );
 
-        let headers = response.headers();
+        let headers = response.headers_names();
 
         if headers.is_empty() {
             return Ok(());
@@ -78,11 +83,10 @@ mod internal {
 
         let mut json = json::JsonValue::new_object();
 
-        for (key, value) in headers.iter().filter(|(_, v)| !v.is_empty()) {
-            let value = value
-                .to_str()
-                .with_context(|| format!("failed to stringify '{:?}'", value))?;
-
+        for (key, value) in headers
+            .iter()
+            .filter_map(|n| response.header(n).map(|v| (n, v)))
+        {
             // json::parse(...) will convert a "100" -> 100 in json
             // but will fail to parse a "hello world" -> \"hello world\" because it expects the double quote to be contained within the value
             // so first try json::parse(..) to correctly parse booleans, numbers, etc., then treat everything else like a string.
