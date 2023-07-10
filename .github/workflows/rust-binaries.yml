@@ -108,9 +108,9 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            "BINARY_PATH=${{ env.TARGET_DIR }}/release/${{ env.BINARY_NAME }}.exe" >> $GITHUB_ENV
+            echo "BINARY_PATH=${{ env.TARGET_DIR }}/release/${{ env.BINARY_NAME }}.exe" >> $GITHUB_ENV
           else
-            "BINARY_PATH=${{ env.TARGET_DIR }}/release/${{ env.BINARY_NAME }}" >> $GITHUB_ENV
+            echo "BINARY_PATH=${{ env.TARGET_DIR }}/release/${{ env.BINARY_NAME }}" >> $GITHUB_ENV
           fi
           echo "path to binary is: ${{ env.BINARY_PATH }}"
 
