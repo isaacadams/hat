@@ -7,7 +7,7 @@ on:
         description: 'name of the CLI'
         required: true
         type: string
-        default: hat
+        default: 'hat'
       version:
         description: 'the version being built'
         required: true
@@ -88,13 +88,31 @@ jobs:
           echo "BUILD_FLAGS=--target ${{ matrix.target }} ${{ env.BUILD_FLAGS }}" >> $GITHUB_ENV
           echo "TARGET_DIR=target/${{ matrix.target }}" >> $GITHUB_ENV
 
-      - name: echo
+      - name: setup audit
+        shell: bash
         run: |
+          cargo install cargo-auditable cargo-audit
+          echo "CARGO=${{ env.CARGO }} auditable" >> $GITHUB_ENV
+
+      - name: echo
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            "BINARY=${{ env.TARGET_DIR }}/release/${{ inputs.name }}.exe" >> $GITHUB_ENV
+          else
+            "BINARY=${{ env.TARGET_DIR }}/release/${{ inputs.name }}" >> $GITHUB_ENV
+          fi
           echo "cargo command is: ${{ env.CARGO }}"
           echo "build flag(s): ${{ env.BUILD_FLAGS }}"
+          echo "name is: ${{ inputs.name }}"
+          echo "version is: ${{ inputs.version }}"
+          echo "path to binary is: ${{ env.BINARY }}"
 
       - name: cargo build
         run: ${{ env.CARGO }} build ${{ env.BUILD_FLAGS }}
+
+      - name: cargo audit bin
+        run: cargo audit bin ${{ env.BINARY }}
 
       - name: archive
         shell: bash
@@ -106,13 +124,12 @@ jobs:
           ls
           ls target/**
           cp README.md "$package/"
+          cp "${{ env.BINARY }}" "$package/"
 
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp "${{ env.TARGET_DIR }}/release/${{ inputs.name }}.exe" "$package/"
             7z a "$package.zip" "$package"
             echo "ASSET=$package.zip" >> $GITHUB_ENV
           else
-            cp "${{ env.TARGET_DIR }}/release/${{ inputs.name }}" "$package/"
             tar czf "$package.tar.gz" "$package"
             echo "ASSET=$package.tar.gz" >> $GITHUB_ENV
           fi
