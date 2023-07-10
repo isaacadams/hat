@@ -21,6 +21,8 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: full
   RUSTFLAGS: -D warnings
+  BINARY_NAME: ${{ inputs.name | 'hat' }}
+  BINARY_VERSION: ${{ inputs.version | '' }}
 
 jobs:
   create-binaries:
@@ -98,33 +100,33 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            "BINARY=${{ env.TARGET_DIR }}/release/${{ inputs.name }}.exe" >> $GITHUB_ENV
+            "BINARY_PATH=${{ env.TARGET_DIR }}/release/${{ env.BINARY_NAME }}.exe" >> $GITHUB_ENV
           else
-            "BINARY=${{ env.TARGET_DIR }}/release/${{ inputs.name }}" >> $GITHUB_ENV
+            "BINARY_PATH=${{ env.TARGET_DIR }}/release/${{ env.BINARY_NAME }}" >> $GITHUB_ENV
           fi
           echo "cargo command is: ${{ env.CARGO }}"
           echo "build flag(s): ${{ env.BUILD_FLAGS }}"
-          echo "name is: ${{ inputs.name }}"
-          echo "version is: ${{ inputs.version }}"
-          echo "path to binary is: ${{ env.BINARY }}"
+          echo "name is: ${{ env.BINARY_NAME }}"
+          echo "version is: ${{ env.BINARY_VERSION }}"
+          echo "path to binary is: ${{ env.BINARY_PATH }}"
 
       - name: cargo build
         run: ${{ env.CARGO }} build ${{ env.BUILD_FLAGS }}
 
       - name: cargo audit bin
-        run: cargo audit bin ${{ env.BINARY }}
+        run: cargo audit bin ${{ env.BINARY_PATH }}
 
       - name: archive
         shell: bash
         run: |
-          package="${{ inputs.name }}-${{ inputs.version }}-${{ matrix.target }}"
+          package="${{ env.BINARY_NAME }}-${{ env.BINARY_VERSION }}-${{ matrix.target }}"
           echo "PACKAGE=$package" >> $GITHUB_ENV
           mkdir -p "$package"
 
           ls
           ls target/**
           cp README.md "$package/"
-          cp "${{ env.BINARY }}" "$package/"
+          cp "${{ env.BINARY_PATH }}" "$package/"
 
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             7z a "$package.zip" "$package"
