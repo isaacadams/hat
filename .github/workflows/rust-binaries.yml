@@ -55,7 +55,7 @@ jobs:
     env:
       # For some builds, we use cross to test on 32-bit and big-endian
       # systems.
-      CARGO: cargo
+      CARGO: 'cargo auditable'
       BUILD_FLAGS: '--verbose --release'
       # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
       TARGET_DIR: target
@@ -102,9 +102,11 @@ jobs:
           echo "version is: ${{ env.BINARY_VERSION }}"
 
       - name: cargo build
+        run: ${{ env.CARGO }} build ${{ env.BUILD_FLAGS }}
+
+      - name: set BINARY_PATH
         shell: bash
         run: |
-          ${{ env.CARGO }} auditable build ${{ env.BUILD_FLAGS }}
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             "BINARY_PATH=${{ env.TARGET_DIR }}/release/${{ env.BINARY_NAME }}.exe" >> $GITHUB_ENV
           else
