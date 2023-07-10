@@ -99,19 +99,21 @@ jobs:
       - name: echo
         shell: bash
         run: |
+          echo "cargo command is: ${{ env.CARGO }}"
+          echo "build flag(s): ${{ env.BUILD_FLAGS }}"
+          echo "name is: ${{ env.BINARY_NAME }}"
+          echo "version is: ${{ env.BINARY_VERSION }}"
+
+      - name: cargo build
+        shell: bash
+        run: |
+          ${{ env.CARGO }} build ${{ env.BUILD_FLAGS }}
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             "BINARY_PATH=${{ env.TARGET_DIR }}/release/${{ env.BINARY_NAME }}.exe" >> $GITHUB_ENV
           else
             "BINARY_PATH=${{ env.TARGET_DIR }}/release/${{ env.BINARY_NAME }}" >> $GITHUB_ENV
           fi
-          echo "cargo command is: ${{ env.CARGO }}"
-          echo "build flag(s): ${{ env.BUILD_FLAGS }}"
-          echo "name is: ${{ env.BINARY_NAME }}"
-          echo "version is: ${{ env.BINARY_VERSION }}"
           echo "path to binary is: ${{ env.BINARY_PATH }}"
-
-      - name: cargo build
-        run: ${{ env.CARGO }} build ${{ env.BUILD_FLAGS }}
 
       - name: cargo audit bin
         run: cargo audit bin ${{ env.BINARY_PATH }}
