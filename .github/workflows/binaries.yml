@@ -91,6 +91,7 @@ jobs:
         shell: bash
         run: |
           package="${{ env.CLI_NAME }}-${{ needs.create-release.outputs.release_version }}-${{ matrix.target }}"
+          echo "PACKAGE=$package" >> $GITHUB_ENV
           mkdir -p "$package"
 
           ls
@@ -100,14 +101,14 @@ jobs:
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             cp "${{ env.TARGET_DIR }}/release/${{ env.CLI_NAME }}.exe" "$package/"
             7z a "$package.zip" "$package"
-            echo "asset=$package.zip" >> $GITHUB_OUTPUT
+            echo "ASSET=$package.zip" >> $GITHUB_ENV
           else
             cp "${{ env.TARGET_DIR }}/release/${{ env.CLI_NAME }}" "$package/"
             tar czf "$package.tar.gz" "$package"
-            echo "asset=$package.tar.gz" >> $GITHUB_OUTPUT
+            echo "ASSET=$package.tar.gz" >> $GITHUB_ENV
           fi
 
-      - name: echo
-        run: |
-          echo $GITHUB_ENV
-          echo ${{ needs.create-binaries.outputs.asset }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.PACKAGE }}
+          path: ${{ env.ASSET }}
