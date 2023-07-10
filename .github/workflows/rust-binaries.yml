@@ -1,12 +1,23 @@
-name: binaries
+name: rust-binaries
 
 on:
+  workflow_call:
+    inputs:
+      name:
+        description: 'name of the CLI'
+        required: true
+        type: string
+        default: hat
+      version:
+        description: 'the version being built'
+        required: true
+        type: string
+        default: ''
   push:
     branches:
       - 'try-build-*'
 
 env:
-  CLI_NAME: hat
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: full
   RUSTFLAGS: -D warnings
@@ -18,16 +29,16 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-musl
-            os: 'ubuntu-latest'
+            os: ubuntu-latest
             cross: true
           - target: aarch64-unknown-linux-musl
-            os: 'ubuntu-latest'
+            os: ubuntu-latest
             cross: true
           - target: x86_64-unknown-linux-gnu
-            os: 'ubuntu-latest'
+            os: ubuntu-latest
             cross: true
           - target: aarch64-unknown-linux-gnu
-            os: 'ubuntu-latest'
+            os: ubuntu-latest
             cross: true
           - target: x86_64-apple-darwin
             os: macos-latest
@@ -38,9 +49,7 @@ jobs:
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             cross: false
-    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
-    outputs:
-      asset: ${{ steps.archive.outputs.asset }}
+    runs-on: ${{ matrix.os }}
     env:
       # For some builds, we use cross to test on 32-bit and big-endian
       # systems.
@@ -90,7 +99,7 @@ jobs:
       - name: archive
         shell: bash
         run: |
-          package="${{ env.CLI_NAME }}-${{ needs.create-release.outputs.release_version }}-${{ matrix.target }}"
+          package="${{ inputs.name }}-${{ inputs.version }}-${{ matrix.target }}"
           echo "PACKAGE=$package" >> $GITHUB_ENV
           mkdir -p "$package"
 
@@ -99,11 +108,11 @@ jobs:
           cp README.md "$package/"
 
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp "${{ env.TARGET_DIR }}/release/${{ env.CLI_NAME }}.exe" "$package/"
+            cp "${{ env.TARGET_DIR }}/release/${{ inputs.name }}.exe" "$package/"
             7z a "$package.zip" "$package"
             echo "ASSET=$package.zip" >> $GITHUB_ENV
           else
-            cp "${{ env.TARGET_DIR }}/release/${{ env.CLI_NAME }}" "$package/"
+            cp "${{ env.TARGET_DIR }}/release/${{ inputs.name }}" "$package/"
             tar czf "$package.tar.gz" "$package"
             echo "ASSET=$package.tar.gz" >> $GITHUB_ENV
           fi
