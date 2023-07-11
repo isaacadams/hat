@@ -7,22 +7,17 @@ on:
         description: 'name of the CLI'
         required: true
         type: string
-        default: 'hat'
       version:
         description: 'the version being built'
         required: true
         type: string
-        default: ''
-  push:
-    branches:
-      - 'try-build-*'
 
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: full
   RUSTFLAGS: -D warnings
-  BINARY_NAME: ${{ inputs.name || 'hat' }}
-  BINARY_VERSION: ${{ inputs.version || '' }}
+  BINARY_NAME: ${{ inputs.name }}
+  BINARY_VERSION: ${{ inputs.version }}
 
 jobs:
   create-binaries:
