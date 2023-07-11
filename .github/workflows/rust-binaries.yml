@@ -1,15 +1,23 @@
-name: binaries
+name: rust-binaries
 
 on:
-  push:
-    branches:
-      - 'try-build-*'
+  workflow_call:
+    inputs:
+      name:
+        description: 'name of the CLI'
+        required: true
+        type: string
+      version:
+        description: 'the version being built'
+        required: true
+        type: string
 
 env:
-  CLI_NAME: hat
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: full
   RUSTFLAGS: -D warnings
+  BINARY_NAME: ${{ inputs.name }}
+  BINARY_VERSION: ${{ inputs.version }}
 
 jobs:
   create-binaries:
@@ -18,16 +26,16 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-musl
-            os: 'ubuntu-latest'
+            os: ubuntu-latest
             cross: true
           - target: aarch64-unknown-linux-musl
-            os: 'ubuntu-latest'
+            os: ubuntu-latest
             cross: true
           - target: x86_64-unknown-linux-gnu
-            os: 'ubuntu-latest'
+            os: ubuntu-latest
             cross: true
           - target: aarch64-unknown-linux-gnu
-            os: 'ubuntu-latest'
+            os: ubuntu-latest
             cross: true
           - target: x86_64-apple-darwin
             os: macos-latest
@@ -38,13 +46,11 @@ jobs:
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             cross: false
-    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
-    outputs:
-      asset: ${{ steps.archive.outputs.asset }}
+    runs-on: ${{ matrix.os }}
     env:
       # For some builds, we use cross to test on 32-bit and big-endian
       # systems.
-      CARGO: cargo
+      CARGO: 'cargo auditable'
       BUILD_FLAGS: '--verbose --release'
       # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
       TARGET_DIR: target
@@ -79,35 +85,54 @@ jobs:
           echo "BUILD_FLAGS=--target ${{ matrix.target }} ${{ env.BUILD_FLAGS }}" >> $GITHUB_ENV
           echo "TARGET_DIR=target/${{ matrix.target }}" >> $GITHUB_ENV
 
+      - name: setup audit
+        run: cargo install cargo-auditable cargo-audit
+
       - name: echo
+        shell: bash
         run: |
           echo "cargo command is: ${{ env.CARGO }}"
           echo "build flag(s): ${{ env.BUILD_FLAGS }}"
+          echo "name is: ${{ env.BINARY_NAME }}"
+          echo "version is: ${{ env.BINARY_VERSION }}"
 
       - name: cargo build
         run: ${{ env.CARGO }} build ${{ env.BUILD_FLAGS }}
 
+      - name: set BINARY_PATH
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            echo "BINARY_PATH=${{ env.TARGET_DIR }}/release/${{ env.BINARY_NAME }}.exe" >> $GITHUB_ENV
+          else
+            echo "BINARY_PATH=${{ env.TARGET_DIR }}/release/${{ env.BINARY_NAME }}" >> $GITHUB_ENV
+          fi
+          echo "path to binary is: ${{ env.BINARY_PATH }}"
+
+      - name: cargo audit bin
+        run: cargo audit bin ${{ env.BINARY_PATH }}
+
       - name: archive
         shell: bash
         run: |
-          package="${{ env.CLI_NAME }}-${{ needs.create-release.outputs.release_version }}-${{ matrix.target }}"
+          package="${{ env.BINARY_NAME }}-${{ env.BINARY_VERSION }}-${{ matrix.target }}"
+          echo "PACKAGE=$package" >> $GITHUB_ENV
           mkdir -p "$package"
 
           ls
           ls target/**
           cp README.md "$package/"
+          cp "${{ env.BINARY_PATH }}" "$package/"
 
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp "${{ env.TARGET_DIR }}/release/${{ env.CLI_NAME }}.exe" "$package/"
             7z a "$package.zip" "$package"
-            echo "asset=$package.zip" >> $GITHUB_OUTPUT
+            echo "ASSET=$package.zip" >> $GITHUB_ENV
           else
-            cp "${{ env.TARGET_DIR }}/release/${{ env.CLI_NAME }}" "$package/"
             tar czf "$package.tar.gz" "$package"
-            echo "asset=$package.tar.gz" >> $GITHUB_OUTPUT
+            echo "ASSET=$package.tar.gz" >> $GITHUB_ENV
           fi
 
-      - name: echo
-        run: |
-          echo $GITHUB_ENV
-          echo ${{ needs.create-binaries.outputs.asset }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.PACKAGE }}
+          path: ${{ env.ASSET }}
