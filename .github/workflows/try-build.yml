@@ -7,7 +7,7 @@ on:
 
 jobs:
   try-create-binaries:
-    uses: isaacadams/hat/.github/workflows/rust-binaries.yml@try-build-archive-upload
+    uses: isaacadams/hat/.github/workflows/rust-binaries.yml@main
     with:
       name: hat
       version: ''
