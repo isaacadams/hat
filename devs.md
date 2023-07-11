@@ -30,6 +30,27 @@ cargo watch -c -w example -i example/local/mock -x 'run example/local/config.tom
 - `cargo publish` on successful releases
 - implement CHANGELOG
 
+## Binary Analysis
+
+using `cargo audit` `cargo auditable`
+
+### `cargo install cargo-bloat`
+
+see biggest functions in release
+
+```bash
+# the following must be set in Cargo.toml for it to work
+# [profile.release]
+# strip = false
+cargo bloat --release -n 10
+```
+
+see biggest dependencies in release build
+
+```bash
+cargo bloat --release --crates
+```
+
 # Docs
 
 - https://rust-cli.github.io/book/tutorial/impl-draft.html
