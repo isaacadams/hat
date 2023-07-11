@@ -1,6 +1,6 @@
 [package]
 name = "hat"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 authors = ["Isaac Adams <isaac.d.adams@gmail.com>"]
 license = "MIT OR Apache-2.0"
