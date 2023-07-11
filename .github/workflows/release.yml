@@ -8,133 +8,34 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+'
 
 env:
-  CLI_NAME: hat
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: full
   RUSTFLAGS: -D warnings
+  # https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+  RELEASE_VERSION: ${{ github.ref_name }}
 
 jobs:
+  create-binaries:
+    uses: isaacadams/hat/.github/workflows/rust-binaries.yml@main
+    with:
+      name: hat
+      version: ${{ github.ref_name }}
+
   create-release:
     name: create-release
-    runs-on: ubuntu-22.04
-    outputs:
-      upload_url: ${{ steps.release.outputs.upload_url }}
-      release_version: ${{ env.RELEASE_VERSION }}
+    runs-on: ubuntu-latest
     steps:
-      - name: collect version from tag
-        shell: bash
-        run: |
-          echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          echo "creating version ${{ env.RELEASE_VERSION }}"
-      - name: add release to github
-        id: release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # download artifacts from rust-binaries
+      - name: download
+        run: ls -R # displays the files
+        working-directory: bin
+
+      # add release to github
+      - name: release
+        uses: softprops/action-gh-release@v1
         with:
+          files: bin/*
+          token: ${{ secrets.GITHUB_TOKEN }}
+          generate_release_notes: true
+          name: ${{ env.RELEASE_VERSION }}
           tag_name: ${{ env.RELEASE_VERSION }}
-          release_name: ${{ env.RELEASE_VERSION }}
-
-  create-artifacts:
-    name: create-artifacts
-    needs: ['create-release']
-    strategy:
-      matrix:
-        include:
-          - target: x86_64-unknown-linux-musl
-            os: 'ubuntu-latest'
-            cross: true
-          - target: aarch64-unknown-linux-musl
-            os: 'ubuntu-latest'
-            cross: true
-          - target: x86_64-unknown-linux-gnu
-            os: 'ubuntu-latest'
-            cross: true
-          - target: aarch64-unknown-linux-gnu
-            os: 'ubuntu-latest'
-            cross: true
-          - target: x86_64-apple-darwin
-            os: macos-latest
-            cross: false
-          - target: aarch64-apple-darwin
-            os: macos-latest
-            cross: false
-          - target: x86_64-pc-windows-msvc
-            os: windows-latest
-            cross: false
-    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
-    env:
-      # For some builds, we use cross to test on 32-bit and big-endian
-      # systems.
-      CARGO: cargo
-      BUILD_FLAGS: '--verbose --release'
-      # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
-      TARGET_DIR: target
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: tool dependencies (Ubuntu)
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: |
-          if ! command -V sudo; then
-            apt-get update
-            apt-get install -y --no-install-recommends sudo
-          fi
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            asciidoctor \
-            zsh xz-utils liblz4-tool musl-tools \
-            brotli zstd
-
-      - name: install cargo
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-          target: ${{ matrix.target }}
-
-      - name: use cross
-        if: ${{ matrix.cross }}
-        shell: bash
-        run: |
-          cargo install cross
-          echo "CARGO=cross" >> $GITHUB_ENV
-          echo "BUILD_FLAGS=--target ${{ matrix.target }} ${{ env.BUILD_FLAGS }}" >> $GITHUB_ENV
-          echo "TARGET_DIR=target/${{ matrix.target }}" >> $GITHUB_ENV
-
-      - name: echo
-        run: |
-          echo "cargo command is: ${{ env.CARGO }}"
-          echo "build flag(s): ${{ env.BUILD_FLAGS }}"
-
-      - name: cargo build
-        run: ${{ env.CARGO }} build ${{ env.BUILD_FLAGS }}
-
-      - name: Build archive
-        shell: bash
-        run: |
-          package="${{ env.CLI_NAME }}-${{ needs.create-release.outputs.release_version }}-${{ matrix.target }}"
-          mkdir -p "$package"
-
-          ls
-          ls target/**
-          cp README.md "$package/"
-
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp "${{ env.TARGET_DIR }}/release/${{ env.CLI_NAME }}.exe" "$package/"
-            7z a "$package.zip" "$package"
-            echo "ASSET=$package.zip" >> $GITHUB_ENV
-          else
-            cp "${{ env.TARGET_DIR }}/release/${{ env.CLI_NAME }}" "$package/"
-            tar czf "$package.tar.gz" "$package"
-            echo "ASSET=$package.tar.gz" >> $GITHUB_ENV
-          fi
-
-      - name: Upload release archive
-        uses: actions/upload-release-asset@v1.0.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ${{ env.ASSET }}
-          asset_name: ${{ env.ASSET }}
-          asset_content_type: application/octet-stream
