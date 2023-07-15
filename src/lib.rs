@@ -19,7 +19,7 @@ use runner::HatRunner;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
-    /// path to test file
+    /// path to .toml configuration file
     path: String,
 
     /// verbose level: DEBUG, INFO, ERROR
@@ -47,4 +47,10 @@ fn test(config_path: &str) -> anyhow::Result<bool> {
         ureq::AgentBuilder::new().build(),
     );
     Ok(runner.test(&mut iter))
+}
+
+#[test]
+fn verify_cli() {
+    use clap::CommandFactory;
+    Cli::command().debug_assert()
 }
