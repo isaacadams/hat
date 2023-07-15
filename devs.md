@@ -5,6 +5,10 @@ cargo t --all
 ```
 
 ```bash
+cargo b && TRYCMD=dump cargo test --lib cli_tests
+```
+
+```bash
 cargo install cargo-watch
 # install http mock server for testing
 cargo install httpmock --features="standalone"

@@ -70,7 +70,7 @@ impl HatRunner {
             result.push_str("\n\n");
         }
 
-        println!("{}", result);
+        println!("{}", result.trim_end_matches('\n'));
 
         all_tests_pass
     }

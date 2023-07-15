@@ -54,3 +54,8 @@ fn verify_cli() {
     use clap::CommandFactory;
     Cli::command().debug_assert()
 }
+
+#[test]
+fn cli_tests() {
+    trycmd::TestCases::new().case("README.md");
+}
