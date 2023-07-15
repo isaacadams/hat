@@ -57,9 +57,11 @@ jobs:
         image: alexliesenfeld/httpmock
         ports:
           - 5000:5000
+        volumes:
+          - mocks:./example/mock
         env:
           RUST_LOG: info
-          HTTPMOCK_MOCK_FILES_DIR: ./example/mock
+          HTTPMOCK_MOCK_FILES_DIR: mocks
 
     steps:
       - uses: actions/checkout@v3
@@ -74,4 +76,4 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --verbose --lib
+          args: --verbose --lib cli_tests
