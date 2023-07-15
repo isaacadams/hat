@@ -1,16 +1,13 @@
 # Testing
 
 ```bash
-cargo t --all
-```
-
-```bash
+# trycmd refresh
 cargo b && TRYCMD=dump cargo test --lib cli_tests
 ```
 
 ```bash
+# dev tools
 cargo install cargo-watch
-# install http mock server for testing
 cargo install httpmock --features="standalone"
 ```
 
@@ -18,9 +15,6 @@ cargo install httpmock --features="standalone"
 # run these two commands in separate terminals
 cargo watch -c -w example/mock -- httpmock -p 5000 --mock-files-dir ./example/mock
 cargo watch -c -w example -i example/mock -x 'run example/config.toml'
-
-# watch specific tests
-cargo watch -c -w src -x 'test -- --nocapture --test test::v2'
 ```
 
 # Release
@@ -38,9 +32,9 @@ cargo watch -c -w src -x 'test -- --nocapture --test test::v2'
 
 - https://rust-cli.github.io/book/tutorial/impl-draft.html
 - using https://jsonplaceholder.typicode.com/guide/ for mocking tests and responses
-- possibly use the following crate for evaluating expressions: (https://docs.rs/evalexpr/latest/evalexpr/)
 - exit codes: https://rust-cli.github.io/book/in-depth/exit-code.html
-- https://github.com/casey/just
+- helpful cli projects
+  - https://github.com/casey/just
 
 # Design
 
@@ -87,9 +81,9 @@ This tool aims to support most cases by making the data in those body formats av
   - if at least one test fails, the parent test name shows a failure
 - variables
   - variables are matched and replaced
-  - added support for single word e.g. {{title}}
-  - added support for json-like syntax e.g. {{response.status}}
-  - added support for json array syntax e.g. {{response.body.[0].title}}
+  - added support for single word e.g. {{ title }}
+  - added support for json-like syntax e.g. {{ body | username }}
+  - added support for json array syntax e.g. {{ body | 0.title }}
   - implemented output variables for multi-step tests
 - .http files can be used for more complex requests w/ variable replacement
 - supported response body content types:
@@ -98,18 +92,11 @@ This tool aims to support most cases by making the data in those body formats av
 
 # TODO
 
-- ✅ add STATUS URL to test output after name
 - make global store aware of environment variables, and allow them to be used with {{env:...}} syntax
-- ✅ replace reqwest with hand rolled simple http client with (hopefully) zero dependencies
-- ✅ finish plan for how to release
-- ✅ exit codes
-  - ✅ if at least one test fails, should respond with failed exit code
 - errors
   - ✅ if error occurs within test, fail the test, keep running all the other tests
   - display error underneath failed test
   - show failed test if it can't find specified `.http` file instead of panic
-- ✅ use new .http syntax that supports file path or raw
-- ✅ integrate config_v2
 - support non-json response body extraction: xml querying and regex
 - deployment
   - cargo publish/cargo install
@@ -119,26 +106,24 @@ This tool aims to support most cases by making the data in those body formats av
 - use the cli in a github action
   - https://docs.github.com/en/actions/creating-actions/creating-a-docker-container-action
   - https://docs.github.com/en/actions/creating-actions/publishing-actions-in-github-marketplace#publishing-an-action
-- ✅ abstract service to replace reqwest for offline testing
 - special syntax to build clients with base domain and auth
-- ✅ use a rust version of jq (https://github.com/MiSawa/xq or https://lib.rs/crates/jaq-parse)
 - build lexer to find {{token}} and replace them with Store trait
 - remove dependency on serde_json
+- ✅ add STATUS URL to test output after name
+- ✅ use new .http syntax that supports file path or raw
+- ✅ integrate config_v2
+- ✅ abstract service to replace reqwest for offline testing
+- ✅ use a rust version of jq (https://github.com/MiSawa/xq or https://lib.rs/crates/jaq-parse)
+- ✅ replace reqwest with hand rolled simple http client with (hopefully) zero dependencies
+- ✅ finish plan for how to release
+- ✅ exit codes
+  - ✅ if at least one test fails, should respond with failed exit code
 
 # Ideas / Improvements
 
 - run tests inside container with httpmock
   - job container: https://docs.github.com/en/actions/using-jobs/running-jobs-in-a-container
   - service container: https://docs.github.com/en/actions/using-containerized-services/about-service-containers
-
-# Helpful Commands
-
-```bash
-# find crate dependency on specific target
-# e.g. looking for openssl on x86_64-unknown-linux-musl target
-cargo tree --target=x86_64-unknown-linux-musl | grep open
-cargo tree --target=x86_64-unknown-linux-musl -i openssl-sys | grep open
-```
 
 # Missing Configuration
 
@@ -150,4 +135,21 @@ cargo tree --target=x86_64-unknown-linux-musl -i openssl-sys | grep open
 
 - bad connection
 - trycmd
-- ensure that variables are rendered in assertions correctly
+
+# Helpful Commands
+
+## Watch Specific Test
+
+```bash
+# watch specific tests
+cargo watch -c -w src -x 'test -- --nocapture --test test::v2'
+```
+
+## Find Dependencies
+
+```bash
+# find crate dependency on specific target
+# e.g. looking for openssl on x86_64-unknown-linux-musl target
+cargo tree --target=x86_64-unknown-linux-musl | grep open
+cargo tree --target=x86_64-unknown-linux-musl -i openssl-sys | grep open
+```
