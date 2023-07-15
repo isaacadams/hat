@@ -52,6 +52,9 @@ jobs:
   examples:
     runs-on: ubuntu-latest
 
+    env:
+      RUST_LOG: off
+
     services:
       httpmock:
         image: isaacadams/hat-httpmock:latest
