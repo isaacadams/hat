@@ -117,11 +117,19 @@ This tool aims to support most cases by making the data in those body formats av
   - choco
   - homebrew
 - use the cli in a github action
+  - https://docs.github.com/en/actions/creating-actions/creating-a-docker-container-action
+  - https://docs.github.com/en/actions/creating-actions/publishing-actions-in-github-marketplace#publishing-an-action
 - ✅ abstract service to replace reqwest for offline testing
 - special syntax to build clients with base domain and auth
 - ✅ use a rust version of jq (https://github.com/MiSawa/xq or https://lib.rs/crates/jaq-parse)
 - build lexer to find {{token}} and replace them with Store trait
 - remove dependency on serde_json
+
+# Ideas / Improvements
+
+- run tests inside container with httpmock
+  - job container: https://docs.github.com/en/actions/using-jobs/running-jobs-in-a-container
+  - service container: https://docs.github.com/en/actions/using-containerized-services/about-service-containers
 
 # Helpful Commands
 
