@@ -72,7 +72,6 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release
 
       - name: Test
         uses: actions-rs/cargo@v1
