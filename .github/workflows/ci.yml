@@ -58,10 +58,10 @@ jobs:
         ports:
           - 5000:5000
         volumes:
-          - mocks:${{ github.workspace }}/example/mock
+          - ./example/mock:/mocks
         env:
           RUST_LOG: info
-          HTTPMOCK_MOCK_FILES_DIR: mocks
+          HTTPMOCK_MOCK_FILES_DIR: /mocks
 
     steps:
       - uses: actions/checkout@v3
