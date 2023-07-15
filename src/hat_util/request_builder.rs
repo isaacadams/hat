@@ -20,6 +20,10 @@ impl RequestBuilder {
         }
     }
 
+    pub fn get_method(&self) -> &str {
+        self.endpoint.get_method()
+    }
+
     pub fn add_header(mut self, name: &str, value: &str) -> Self {
         self.inner = self.inner.header(name, value);
         self

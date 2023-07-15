@@ -10,15 +10,15 @@ pub struct Endpoint {
 
 impl Endpoint {
     fn parse_method(method: &str) -> UtilResult<(String, HttpMethod)> {
-        let method = method.to_lowercase();
+        let method = method.to_uppercase();
         let http_method = match method.as_ref() {
-            "get" => HttpMethod::GET,
-            "post" => HttpMethod::POST,
-            "put" => HttpMethod::PUT,
-            "patch" => HttpMethod::PATCH,
-            "delete" => HttpMethod::DELETE,
-            "head" => HttpMethod::HEAD,
-            "options" => HttpMethod::OPTIONS,
+            "GET" => HttpMethod::GET,
+            "POST" => HttpMethod::POST,
+            "PUT" => HttpMethod::PUT,
+            "PATCH" => HttpMethod::PATCH,
+            "DELETE" => HttpMethod::DELETE,
+            "HEAD" => HttpMethod::HEAD,
+            "OPTIONS" => HttpMethod::OPTIONS,
             _ => return Err(UtilError::InvalidRestMethod(method)),
         };
 
@@ -33,6 +33,10 @@ impl Endpoint {
                 url, e
             ))),
         }
+    }
+
+    pub fn get_method(&self) -> &str {
+        &self.method.0
     }
 
     pub fn new(url: &str, method: &str) -> UtilResult<Self> {
@@ -54,19 +58,20 @@ mod test {
     fn endpoint_parsing_works() -> UtilResult<()> {
         let url = "https://google.com";
         for m in vec!["get", "post", "put", "delete", "patch", "head", "options"] {
-            assert!(Endpoint::new(url, m).is_ok());
+            let endpoint = Endpoint::new(url, m)?;
+            assert_eq!(endpoint.method.0, m.to_uppercase());
             assert!(Endpoint::new(url, m.to_uppercase().as_ref()).is_ok());
         }
 
         assert_eq!(Endpoint::parse_method("get")?.1, HttpMethod::GET);
 
         assert!(matches!(
-            Endpoint::new(url, "invalid"),
+            Endpoint::new(url, "invalid-method"),
             Err(UtilError::InvalidRestMethod(_))
         ));
 
         assert!(matches!(
-            Endpoint::new("not-a-valid-url", "get"),
+            Endpoint::new("not-a-valid-url", "GET"),
             Err(UtilError::InvalidUrl(_))
         ));
 

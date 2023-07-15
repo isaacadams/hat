@@ -74,11 +74,13 @@ fn build<T: Store + RequestExecutor>(
 
     // parses the raw http request into something the http client can use
     let request = crate::http_file_parser::parse(http_contents.as_str())?;
+    let method = request.get_method().to_string();
     let response = hat.execute(request)?;
     let response_info = format!(
-        "{} {} {} {}",
+        "{} {} {} {} {}",
         response.status(),
         response.status_text(),
+        method,
         response.get_url(),
         response.http_version()
     );
