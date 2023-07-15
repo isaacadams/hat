@@ -6,18 +6,17 @@ pub fn is_true<T: AsRef<str>>(expression: T) -> bool {
 }
 
 pub struct TestAssertions {
-    name: String,
+    header: String,
+    description: Option<String>,
     assertions: String,
 }
 
-impl TestAssertions {
-    fn new(name: String, assertions: String) -> Self {
-        Self { name, assertions }
+pub fn new(header: String, description: Option<String>, assertions: String) -> TestAssertions {
+    TestAssertions {
+        header,
+        description,
+        assertions,
     }
-}
-
-pub fn new(name: String, assertions: String) -> TestAssertions {
-    TestAssertions::new(name, assertions)
 }
 
 pub fn pretty_bool(result: bool) -> &'static str {
@@ -32,7 +31,15 @@ impl Assert for TestAssertions {
     fn assert(&self, buffer: &mut String) -> bool {
         let mut test = true;
         let start = buffer.len();
-        buffer.push_str(&self.name);
+
+        buffer.push_str(&self.header);
+
+        if let Some(d) = &self.description {
+            buffer.push_str("\n📌 ");
+            buffer.push_str(d);
+        }
+
+        buffer.push('\n');
 
         for t in self.assertions.lines() {
             let assertion = t;

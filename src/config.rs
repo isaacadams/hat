@@ -41,7 +41,7 @@ pub struct Config {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TestConfig {
-    name: String,
+    description: Option<String>,
     http: String,
     assertions: String,
     outputs: Option<HashMap<String, String>>,
@@ -63,7 +63,7 @@ impl HatTestBuilder for TestConfig {
 fn build<T: Store + RequestExecutor>(
     hat_test_config: TestConfig,
     hat: &T,
-    buffer: &mut String,
+    _: &mut String,
 ) -> Result<HatTestOutput, HatError> {
     // extract the raw http request from config
     // can either be a path to an .http file or the raw http request
@@ -85,8 +85,6 @@ fn build<T: Store + RequestExecutor>(
         response.http_version()
     );
 
-    buffer.push_str(&response_info);
-
     log::info!("{}", &response_info);
     log::debug!("{:#?}", &response);
 
@@ -98,7 +96,7 @@ fn build<T: Store + RequestExecutor>(
 
     let assertions =
         store_composed.match_and_replace(&hat_test_config.assertions, |v| v.as_literal());
-    let assert = assertion::new(hat_test_config.name, assertions);
+    let assert = assertion::new(response_info, hat_test_config.description, assertions);
 
     let outputs = match hat_test_config.outputs {
         Some(o) => Some(factory::outputs(&store_composed, o)?),

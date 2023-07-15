@@ -2,14 +2,14 @@
 base = "http://localhost:5000"
 
 [[tests]]
-name = "status only, no headers or body"
+description = "status only, no headers or body"
 http = "GET {{base}}/200"
 assertions = """
 {{status}} == 200
 """
 
 [[tests]]
-name = "status + json body, no headers"
+description = "status + json body, no headers"
 http = "GET {{base}}/message"
 assertions = """
 {{status}} == 200
@@ -17,7 +17,7 @@ assertions = """
 """
 
 [[tests]]
-name = "post message w/ header"
+description = "post message w/ header"
 http = "POST {{base}}/message"
 assertions = """
 {{status}} == 200
@@ -31,7 +31,7 @@ messageId = "{{body | id}}"
 nextRoute = "{{body | next_route}}"
 
 [[tests]]
-name = "show example of querying arrays in response"
+description = "show example of querying arrays in response"
 http = "GET {{base}}/{{nextRoute}}"
 assertions = """
 {{status}} == 200
@@ -42,7 +42,7 @@ assertions = """
 """
 
 [[tests]]
-name = "text body works"
+description = "text body works"
 http = "GET {{base}}/posts/1"
 assertions = """
 {{status}} == 200
@@ -50,7 +50,7 @@ assertions = """
 """
 
 [[tests]]
-name = "show example of querying arrays in response"
+description = "show example of querying arrays in response"
 http = "example/create-post.http"
 assertions = """
 {{status}} == 201
