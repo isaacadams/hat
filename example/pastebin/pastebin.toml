@@ -1,0 +1,10 @@
+[environment]
+base = "https://pastebin.run/api/v1"
+
+[[tests]]
+http = "GET {{base}}/languages"
+assertions = """
+{{status}} == 200
+{{ headers | content-type }} == "application/json"
+{{ body | #(identifier=="plaintext").name }} == "Plain text"
+"""

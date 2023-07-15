@@ -51,7 +51,7 @@ assertions = """
 
 [[tests]]
 description = "show example of querying arrays in response"
-http = "example/create-post.http"
+http = "example/local/create-post.http"
 assertions = """
 {{status}} == 201
 """

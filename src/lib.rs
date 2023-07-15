@@ -57,5 +57,7 @@ fn verify_cli() {
 
 #[test]
 fn cli_tests() {
-    trycmd::TestCases::new().case("README.md");
+    trycmd::TestCases::new()
+        .case("example/**/*.md")
+        .case("README.md");
 }

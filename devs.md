@@ -1,8 +1,10 @@
 # Testing
 
 ```bash
-# trycmd refresh
+# trycmd debug
 cargo b && TRYCMD=dump cargo test --lib cli_tests
+# trycmd refresh
+cargo b && TRYCMD=OVERWRITE cargo test --lib cli_tests
 ```
 
 ```bash
@@ -13,8 +15,8 @@ cargo install httpmock --features="standalone"
 
 ```bash
 # run these two commands in separate terminals
-cargo watch -c -w example/mock -- httpmock -p 5000 --mock-files-dir ./example/mock
-cargo watch -c -w example -i example/mock -x 'run example/config.toml'
+cargo watch -c -w example/local/mock -- httpmock -p 5000 --mock-files-dir ./example/local/mock
+cargo watch -c -w example -i example/local/mock -x 'run example/local/config.toml'
 ```
 
 # Release
@@ -35,6 +37,7 @@ cargo watch -c -w example -i example/mock -x 'run example/config.toml'
 - exit codes: https://rust-cli.github.io/book/in-depth/exit-code.html
 - helpful cli projects
   - https://github.com/casey/just
+  - https://github.com/BurntSushi/ripgrep
 
 # Design
 
