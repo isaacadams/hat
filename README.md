@@ -46,13 +46,7 @@ A `.toml` file configured with HTTP requests and assertions can be loaded by the
 base = "https://your-api-domain.com/api/v1"
 
 [[tests]]
-# http = "<METHOD> <URL>" OR "path/to/file.http" OR
-# http = """
-#<METHOD> <URL>
-#<HEADER>: <VALUE>
-#
-#<BODY>
-#"""
+# http = "<METHOD> <URL>" OR "path/to/file.http"
 http = "GET {{base}}/users"
 # optional description
 description = "get the users"
