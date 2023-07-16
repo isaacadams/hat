@@ -66,6 +66,7 @@ impl HatRunner {
                     }
                 }
                 Err(e) => {
+                    all_tests_pass = false;
                     result.push_str(crate::assertion::pretty_bool(false));
                     result.push_str(e.to_string().as_str());
                 }

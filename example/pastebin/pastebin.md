@@ -1,5 +1,6 @@
 ```console
 $ hat example/pastebin/pastebin.toml
+? success
 
 ✅ 200 OK GET https://pastebin.run/api/v1/languages HTTP/1.1
 

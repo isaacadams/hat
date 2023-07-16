@@ -1,5 +1,6 @@
 ```console
 $ hat example/local/config.toml
+? success
 
 ✅ 200 OK GET http://localhost:5000/200 HTTP/1.1
 📌 status only, no headers or body

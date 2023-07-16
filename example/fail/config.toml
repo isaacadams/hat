@@ -1,0 +1,7 @@
+[environment]
+
+[[tests]]
+http = "GET https://localhost:1000/200"
+assertions = """
+{{status}} == 200
+"""

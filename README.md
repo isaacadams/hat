@@ -2,8 +2,8 @@
 
 See examples of using `hat`
 
-- [localhost example #1](./example/local/README.md)
-- [pastebin example #1](./example/pastebin/README.md)
+- [localhost example #1](./example/local/local.md)
+- [pastebin example #1](./example/pastebin/pastebin.md)
 
 ```console
 $ hat --help
