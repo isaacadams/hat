@@ -1,6 +1,6 @@
 ```console
 $ hat example/fail/config.toml
 ? failed
-❌ test failed to build before execution, cause: response failed: https://localhost:1000/200: Connection Failed: Connect error: Connection refused (os error 61)
+❌ test failed to build before execution, cause: response failed: https://localhost:1000/200: Connection Failed: [..]
 
 ```
