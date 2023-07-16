@@ -93,7 +93,7 @@ this is a file type unique to this CLI tool. Below is an example of how you can 
 
 ```http
 POST {{base}}/posts
-Content-Type application/json
+Content-Type: application/json
 
 [
     "I made a new post today"
