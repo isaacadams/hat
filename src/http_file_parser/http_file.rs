@@ -69,7 +69,7 @@ pub mod parser {
             x
         } else {
             return Err(HttpLexerError::MalformedHttpFile(
-                "request line is missing\nmust have at least one line with a <method> <ur>",
+                "request line is missing\nmust have at least one line with a <METHOD> <URL>",
             ));
         };
 

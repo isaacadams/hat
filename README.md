@@ -10,7 +10,7 @@ See examples of using `hat`
 $ hat --help
 hat runs HTTP tests based on a toml configuration file.
 
-The configured tests can check response status, heeaders, and body
+The configured tests can check response status, headers, and body
 using binary operations such as ==, >, <, !=, etc.
 
 If one or more tests fail, hat will return a failed exit code.
