@@ -60,6 +60,10 @@ jobs:
         image: isaacadams/hat-httpmock:latest
         ports:
           - 5000:5000
+      pastebin:
+        image: mkodockx/docker-pastebin
+        ports:
+          - 7777:80
 
     steps:
       - uses: actions/checkout@v3

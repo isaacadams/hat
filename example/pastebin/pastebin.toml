@@ -1,27 +1,17 @@
 [environment]
-base = "https://pastebin.run/api/v1"
-
-[[tests]]
-http = "GET {{base}}/languages"
-assertions = """
-{{status}} == 200
-{{ headers | content-type }} == "application/json"
-{{ body | #(identifier=="plaintext").name }} == "Plain text"
-"""
+host = "http://localhost:7777"
 
 [[tests]]
 http = "example/pastebin/upload.http"
 assertions = """
 {{ status }} == 200
-{{ headers | content-length }} > 0
 """
 [tests.outputs]
-id = "{{ body }}"
+id = "{{ body | key }}"
 
 [[tests]]
-http = "GET https://pastebin.run/{{id}}.txt"
+http = "GET {{host}}/raw/{{id}}"
 assertions = """
 {{ status }} == 200
-{{ headers | content-length }} > 0
 {{ body }} == "I was created by hat."
 """

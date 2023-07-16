@@ -20,6 +20,19 @@ impl RequestBuilder {
         }
     }
 
+    #[allow(dead_code)]
+    pub fn get_header(&self, key: &str) -> Option<&str> {
+        self.inner
+            .headers_ref()
+            .and_then(|h| h.get(key))
+            .and_then(|v| v.to_str().ok())
+    }
+
+    #[allow(dead_code)]
+    pub fn get_url(&self) -> &str {
+        self.endpoint.get_url_as_str()
+    }
+
     pub fn get_method(&self) -> &str {
         self.endpoint.get_method()
     }
@@ -55,6 +68,18 @@ impl RequestBuilder {
         (self.inner, self.endpoint, self.body)
     }
 
+    #[allow(dead_code)]
+    pub fn build_host_header(url: &url::Url) -> Option<std::borrow::Cow<'_, str>> {
+        use std::borrow::Cow;
+        let host = url.host_str()?;
+        let scheme = url.scheme();
+        Some(if scheme == "https" {
+            Cow::Owned(format!("{}:443", host))
+        } else {
+            Cow::Borrowed(host)
+        })
+    }
+
     pub fn build(
         mut builder: http::request::Builder,
         endpoint: Endpoint,
@@ -82,6 +107,32 @@ impl RequestBuilder {
                 });
         }
 
+        /*
+        something like this might be useful in the future.
+        if let Some(host) = Self::build_host_header(endpoint.get_url()) {
+            ureq_request = ureq_request.set("Host", host.as_ref());
+        }
+        */
+
         Some(ureq_request)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::borrow::Cow;
+
+    #[test]
+    pub fn host_header_builder_works() -> anyhow::Result<()> {
+        let https = url::Url::parse("https://google.com/something/api/blah")?;
+        let mut host = RequestBuilder::build_host_header(&https);
+        assert_eq!(host, Some(Cow::Borrowed("google.com:443")));
+
+        let http = url::Url::parse("http://google.com/something/api/blah")?;
+        host = RequestBuilder::build_host_header(&http);
+        assert_eq!(host, Some(Cow::Borrowed("google.com")));
+
+        Ok(())
     }
 }

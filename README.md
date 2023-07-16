@@ -10,7 +10,7 @@ See examples of using `hat`
 $ hat --help
 hat runs HTTP tests based on a toml configuration file.
 
-The configured tests can check response status, heeaders, and body
+The configured tests can check response status, headers, and body
 using binary operations such as ==, >, <, !=, etc.
 
 If one or more tests fail, hat will return a failed exit code.
@@ -46,13 +46,7 @@ A `.toml` file configured with HTTP requests and assertions can be loaded by the
 base = "https://your-api-domain.com/api/v1"
 
 [[tests]]
-# http = "<METHOD> <URL>" OR "path/to/file.http" OR
-# http = """
-#<METHOD> <URL>
-#<HEADER> <VALUE>
-#
-#<BODY>
-#"""
+# http = "<METHOD> <URL>" OR "path/to/file.http"
 http = "GET {{base}}/users"
 # optional description
 description = "get the users"
@@ -93,7 +87,7 @@ this is a file type unique to this CLI tool. Below is an example of how you can 
 
 ```http
 POST {{base}}/posts
-Content-Type application/json
+Content-Type: application/json
 
 [
     "I made a new post today"
