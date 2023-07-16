@@ -2,8 +2,9 @@
 
 See examples of using `hat`
 
-- [localhost example #1](./example/local/local.md)
-- [pastebin example #1](./example/pastebin/pastebin.md)
+- [localhost](./example/local/local.md)
+- [pastebin](./example/pastebin/pastebin.md)
+- [fail](./example/fail/fail.md)
 
 ```console
 $ hat --help
