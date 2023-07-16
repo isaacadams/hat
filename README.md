@@ -1,6 +1,6 @@
 # Usage
 
-The `hat` CLI points to a `.toml` file configuring with http endpoints and tests. Below is an example of such a file.
+A `.toml` file configured with HTTP requests and assertions can be loaded by the `hat` CLI which will then execute the HTTP requests and run the assertions again the HTTP responses.
 
 ```toml
 # see other examples of a hat .toml config file in the example folder

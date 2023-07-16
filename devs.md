@@ -48,7 +48,7 @@ cargo watch -c -w example -i example/local/mock -x 'run example/local/config.tom
   - `http`: create the request in one of two ways
     - simple method + url: `<METHOD> <URL>` e.g. GET https://google.com
     - use an .http file and point to it: `path/to/my-http-request.http`
-  - `assertions`: define your expectations by querying the response data and using bit operations (==, >, <, !=, etc.)
+  - `assertions`: define your expectations of the HTTP response by querying the response data and using bit operations (==, >, <, !=, etc.)
     - e.g. check the response status `{{ status }} == 200`
     - e.g. check the response content length `{{ headers | content-length }} > 0`
     - e.g. check the response content length `{{ body | post }} == "I am a post"`
