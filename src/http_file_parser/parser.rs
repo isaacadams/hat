@@ -151,7 +151,7 @@ does not conform to header formatting rule(s)
             lines.collect()
         };
 
-        if remaining.len() > 0 {
+        if !remaining.is_empty() {
             log::debug!("[{}+ ___body]: {}", row + 1, &remaining);
             builder.add_body(remaining);
         }

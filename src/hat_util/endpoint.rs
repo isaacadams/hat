@@ -36,7 +36,7 @@ impl Endpoint {
     }
 
     pub fn get_url(&self) -> &str {
-        &self.url.as_str()
+        self.url.as_str()
     }
 
     pub fn get_method(&self) -> &str {
