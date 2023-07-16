@@ -67,13 +67,13 @@ fn build<T: Store + RequestExecutor>(
 ) -> Result<HatTestOutput, HatError> {
     // extract the raw http request from config
     // can either be a path to an .http file or the raw http request
-    let http_contents = crate::http_file_parser::get_contents(hat_test_config.http)?;
+    let http_contents = crate::http_file::get_contents(hat_test_config.http)?;
     // replace variables in raw http request
     let http_contents = hat.match_and_replace(http_contents.as_str(), |v| v.as_value());
     log::debug!("HTTP: {}", &http_contents);
 
     // parses the raw http request into something the http client can use
-    let request = crate::http_file_parser::parse(http_contents.as_str())?;
+    let request = crate::http_file::parse(http_contents.as_str())?;
     let method = request.get_method().to_string();
     let response = hat.execute(request)?;
     let response_info = format!(

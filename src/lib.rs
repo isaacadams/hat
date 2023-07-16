@@ -3,7 +3,7 @@ mod config;
 mod error;
 mod factory;
 mod hat_util;
-mod http_file_parser;
+mod http_file;
 #[allow(dead_code)]
 mod operator;
 mod query;

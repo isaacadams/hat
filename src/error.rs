@@ -3,7 +3,7 @@ pub enum HatError {
     #[error("{0:#}")]
     IO(#[from] std::io::Error),
     #[error("{0:#}")]
-    HttpLexer(#[from] crate::http_file_parser::HttpLexerError),
+    HttpLexer(#[from] crate::http_file::HttpLexerError),
     #[error("{0:#}")]
     TomlError(#[from] toml::de::Error),
     #[error("{0:#}")]
