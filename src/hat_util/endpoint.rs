@@ -35,8 +35,13 @@ impl Endpoint {
         }
     }
 
-    pub fn get_url(&self) -> &str {
+    pub fn get_url_as_str(&self) -> &str {
         self.url.as_str()
+    }
+
+    #[allow(dead_code)]
+    pub fn get_url(&self) -> &url::Url {
+        &self.url
     }
 
     pub fn get_method(&self) -> &str {

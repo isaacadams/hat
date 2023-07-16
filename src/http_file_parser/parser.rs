@@ -152,6 +152,9 @@ does not conform to header formatting rule(s)
         };
 
         if !remaining.is_empty() {
+            let mut remaining = remaining;
+            // remove extra '\n'
+            remaining.pop();
             log::debug!("[{}+ ___body]: {}", row + 1, &remaining);
             builder.add_body(remaining);
         }
@@ -243,8 +246,7 @@ Accept: application/json
                 r#"{
     "message": "hello world",
     "count": 10
-}
-"#
+}"#
             ))
         );
     }
@@ -273,8 +275,7 @@ Accept: application/json
                 r#"{
     "message": "hello world",
     "count": 10
-}
-"#
+}"#
             ))
         );
     }
