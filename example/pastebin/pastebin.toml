@@ -8,3 +8,20 @@ assertions = """
 {{ headers | content-type }} == "application/json"
 {{ body | #(identifier=="plaintext").name }} == "Plain text"
 """
+
+[[tests]]
+http = "example/pastebin/upload.http"
+assertions = """
+{{ status }} == 200
+{{ headers | content-length }} > 0
+"""
+[tests.outputs]
+id = "{{ body }}"
+
+[[tests]]
+http = "GET https://pastebin.run/{{id}}.txt"
+assertions = """
+{{ status }} == 200
+{{ headers | content-length }} > 0
+{{ body }} == "I was created by hat."
+"""
