@@ -42,12 +42,12 @@ pub fn parse_from_utf8<T: AsRef<[u8]>>(
     // if index == 0, then HttpToken::Request(..)
     // if index > 0, then HttpToken::Header(..)
     // until line == "\n", then HttpToken::Body(..)
-    let builder = parser::request(&contents)?;
+    let builder = inner::request(&contents)?;
 
     Ok(builder)
 }
 
-pub mod parser {
+mod inner {
     use super::*;
 
     /// <METHOD> <URL>

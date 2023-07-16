@@ -1,4 +1,4 @@
-mod http_file;
+mod parser;
 
 #[derive(thiserror::Error, Debug)]
 pub enum HttpLexerError {
@@ -17,7 +17,7 @@ pub enum HttpLexerError {
     IO(#[from] std::io::Error),
 }
 
-pub use http_file::{parse, parse_from_path, parse_from_utf8};
+pub use parser::{parse, parse_from_path, parse_from_utf8};
 
 pub fn get_contents(input: String) -> Result<String, HttpLexerError> {
     Ok(if input.ends_with(".http") {
