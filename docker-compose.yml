@@ -1,0 +1,9 @@
+services:
+  httpmock:
+    image: isaacadams/hat-httpmock:latest
+    ports:
+      - 5000:5000
+  pastebin:
+    image: mkodockx/docker-pastebin
+    ports:
+      - 7777:80

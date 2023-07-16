@@ -1,170 +1,121 @@
-use crate::hat_util::RequestBuilder;
-use std::path::Path;
-
 use super::HttpLexerError;
+use crate::hat_util::RequestBuilder;
 
-pub fn parse(input: &str) -> Result<RequestBuilder, HttpLexerError> {
-    if input.contains(".http") {
-        parse_from_path(input)
+/// <METHOD> <URL>
+/// METHOD = letters only
+/// URL    = https://www.rfc-editor.org/rfc/rfc9110.html#section-4.1
+pub fn parse_request_line(line: &str) -> Option<[&str; 2]> {
+    let mut line = line.split(' ');
+    let method = line.next()?;
+    let url = line.next()?;
+
+    if method.is_empty() || url.is_empty() {
+        return None;
+    }
+
+    Some([method, url])
+}
+
+/// <HEADER>: <VALUES>
+/// HEADER = letters + '-'
+/// VALUES = <VALUE> ... <VALUE>
+/// VALUE = alphanumerics
+pub fn parse_header_line(line: &str) -> Option<[&str; 2]> {
+    let mut line = line.split(": ");
+    let header_name = line.next()?;
+    let header_value = line.next()?;
+
+    if header_name.is_empty() || header_value.is_empty() {
+        return None;
+    }
+
+    Some([header_name, header_value])
+}
+
+pub fn request(contents: &str) -> Result<RequestBuilder, HttpLexerError> {
+    let mut lines = contents.lines();
+    let mut row = 1;
+    let col = 1;
+
+    let first_line = if let Some(x) = lines.next() {
+        log::debug!("[{} _request]: {}", row, x);
+        x
     } else {
-        parse_from_utf8(input)
-    }
-}
+        return Err(HttpLexerError::MalformedHttpFile(
+            "request line is missing\nmust have at least one line with a <METHOD> <URL>",
+        ));
+    };
 
-pub fn parse_from_path<P: AsRef<Path>>(path: P) -> Result<RequestBuilder, HttpLexerError> {
-    let buffer = std::fs::read(path)?;
-    let builder = parse_from_utf8(buffer)?;
-    Ok(builder)
-}
+    let [method, url] =
+        self::parse_request_line(first_line).ok_or(HttpLexerError::MalformedLine {
+            row,
+            col,
+            content: first_line.to_string(),
+            reason: std::borrow::Cow::Borrowed(
+                "a method and a url path is expected\n<METHOD> <URL>",
+            ),
+        })?;
 
-/// .http specification
-/// follows RFC9110 https://www.rfc-editor.org/rfc/rfc9110.html#section-3.9
-///
-///```http
-///request  (required)  | <METHOD> <URL>
-///```
-/// OR
-///```http
-///request  (required)  | <METHOD> <URL>
-///headers  (optional)  | <HEADER_NAME>: <HEADER_VALUE>
-///                     | ...
-///                     | <HEADER_NAME>: <HEADER_VALUE>
-///newline  (required)  |
-///body     (optional)  | <BODY>
-///```
-pub fn parse_from_utf8<T: AsRef<[u8]>>(
-    http_file_buffer: T,
-) -> Result<RequestBuilder, HttpLexerError> {
-    let contents = String::from_utf8_lossy(http_file_buffer.as_ref());
+    let mut builder = RequestBuilder::new(method, url)?;
 
-    // eventually create HttpTokens enum to do something like the following
-    // lines.next()
-    // if index == 0, then HttpToken::Request(..)
-    // if index > 0, then HttpToken::Header(..)
-    // until line == "\n", then HttpToken::Body(..)
-    let builder = inner::request(&contents)?;
+    // parse headers
+    let mut current = lines.next();
+    while let Some(line) = current {
+        row += 1;
 
-    Ok(builder)
-}
-
-mod inner {
-    use super::*;
-
-    /// <METHOD> <URL>
-    /// METHOD = letters only
-    /// URL    = https://www.rfc-editor.org/rfc/rfc9110.html#section-4.1
-    pub fn parse_request_line(line: &str) -> Option<[&str; 2]> {
-        let mut line = line.split(' ');
-        let method = line.next()?;
-        let url = line.next()?;
-
-        if method.is_empty() || url.is_empty() {
-            return None;
+        if line.is_empty() {
+            log::debug!("[{} _newline]: {}", row, line);
+            break;
         }
 
-        Some([method, url])
-    }
+        log::debug!("[{} __header]: {}", row, line);
 
-    /// <HEADER>: <VALUES>
-    /// HEADER = letters + '-'
-    /// VALUES = <VALUE> ... <VALUE>
-    /// VALUE = alphanumerics
-    pub fn parse_header_line(line: &str) -> Option<[&str; 2]> {
-        let mut line = line.split(": ");
-        let header_name = line.next()?;
-        let header_value = line.next()?;
-
-        if header_name.is_empty() || header_value.is_empty() {
-            return None;
-        }
-
-        Some([header_name, header_value])
-    }
-
-    pub fn request(contents: &str) -> Result<RequestBuilder, HttpLexerError> {
-        let mut lines = contents.lines();
-        let mut row = 1;
-        let col = 1;
-
-        let first_line = if let Some(x) = lines.next() {
-            log::debug!("[{} _request]: {}", row, x);
-            x
-        } else {
-            return Err(HttpLexerError::MalformedHttpFile(
-                "request line is missing\nmust have at least one line with a <METHOD> <URL>",
-            ));
-        };
-
-        let [method, url] =
-            self::parse_request_line(first_line).ok_or(HttpLexerError::MalformedLine {
+        let [header_name, header_value] =
+            self::parse_header_line(line).ok_or(HttpLexerError::MalformedLine {
                 row,
                 col,
-                content: first_line.to_string(),
+                content: line.to_string(),
                 reason: std::borrow::Cow::Borrowed(
-                    "a method and a url path is expected\n<METHOD> <URL>",
+                    r#"
+does not conform to header formatting rule(s)
+<NAME>: <VALUE>"#,
                 ),
             })?;
 
-        let mut builder = RequestBuilder::new(method, url)?;
-
-        // parse headers
-        let mut current = lines.next();
-        while let Some(line) = current {
-            row += 1;
-
-            if line.is_empty() {
-                log::debug!("[{} _newline]: {}", row, line);
-                break;
-            }
-
-            log::debug!("[{} __header]: {}", row, line);
-
-            let [header_name, header_value] =
-                self::parse_header_line(line).ok_or(HttpLexerError::MalformedLine {
-                    row,
-                    col,
-                    content: line.to_string(),
-                    reason: std::borrow::Cow::Borrowed(
-                        r#"
-does not conform to header formatting rule(s)
-<NAME>: <VALUE>"#,
-                    ),
-                })?;
-
-            builder = builder.add_header(header_name, header_value);
-            current = lines.next();
-        }
-
-        // eventually make this configurable?
-        // likely always want to load the unaltered request body
-
-        // should use .remainder() here, but its not stabilized
-        // https://doc.rust-lang.org/std/str/struct.Split.html#method.remainder
-        let preserve_newlines = true;
-        let remaining: String = if preserve_newlines {
-            lines.fold(String::new(), |mut p, c| {
-                p.push_str(c);
-                p.push('\n');
-                p
-            })
-        } else {
-            lines.collect()
-        };
-
-        if !remaining.is_empty() {
-            let mut remaining = remaining;
-            // remove extra '\n'
-            remaining.pop();
-            log::debug!("[{}+ ___body]: {}", row + 1, &remaining);
-            builder.add_body(remaining);
-        }
-
-        Ok(builder)
+        builder = builder.add_header(header_name, header_value);
+        current = lines.next();
     }
+
+    // eventually make this configurable?
+    // likely always want to load the unaltered request body
+
+    // should use .remainder() here, but its not stabilized
+    // https://doc.rust-lang.org/std/str/struct.Split.html#method.remainder
+    let preserve_newlines = true;
+    let remaining: String = if preserve_newlines {
+        lines.fold(String::new(), |mut p, c| {
+            p.push_str(c);
+            p.push('\n');
+            p
+        })
+    } else {
+        lines.collect()
+    };
+
+    if !remaining.is_empty() {
+        let mut remaining = remaining;
+        // remove extra '\n'
+        remaining.pop();
+        log::debug!("[{}+ ___body]: {}", row + 1, &remaining);
+        builder.add_body(remaining);
+    }
+
+    Ok(builder)
 }
 
 #[cfg(test)]
 mod test {
+    use super::super::parse_from_utf8;
     use super::*;
 
     #[test]
