@@ -4,7 +4,7 @@ mod http_file;
 pub enum HttpLexerError {
     #[error(".http rule violated: {0}")]
     MalformedHttpFile(&'static str),
-    #[error("[{row},{col}] '{content}' is invalid because {reason}")]
+    #[error("\n[Ln {row}, Col {col}] => '{content}' is invalid\n{reason}")]
     MalformedLine {
         row: usize,
         col: usize,

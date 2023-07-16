@@ -18,34 +18,31 @@ pub fn parse_from_path<P: AsRef<Path>>(path: P) -> Result<RequestBuilder, HttpLe
 }
 
 /// .http specification
-/// request  (required)  | <METHOD> <URL>
-/// headers  (optional)  | <HEADER_NAME> <HEADER_VALUE>
-///                      | ...
-///                      | <HEADER_NAME> <HEADER_VALUE>
-///                      |
-/// body     (optional)  | <BODY>
+/// follows RFC9110 https://www.rfc-editor.org/rfc/rfc9110.html#section-3.9
+///
+///```http
+///request  (required)  | <METHOD> <URL>
+///```
+/// OR
+///```http
+///request  (required)  | <METHOD> <URL>
+///headers  (optional)  | <HEADER_NAME>: <HEADER_VALUE>
+///                     | ...
+///                     | <HEADER_NAME>: <HEADER_VALUE>
+///newline  (required)  |
+///body     (optional)  | <BODY>
+///```
 pub fn parse_from_utf8<T: AsRef<[u8]>>(
     http_file_buffer: T,
 ) -> Result<RequestBuilder, HttpLexerError> {
     let contents = String::from_utf8_lossy(http_file_buffer.as_ref());
 
-    // instead of doing this, I could call .next() on everything
+    // eventually create HttpTokens enum to do something like the following
+    // lines.next()
     // if index == 0, then HttpToken::Request(..)
     // if index > 0, then HttpToken::Header(..)
-    // until line == "\n\n", then HttpToken::Body(..)
-    let mut lines = contents.split("\n\n");
-
-    let mut builder = if let Some(request) = lines.next() {
-        parser::request(request)?
-    } else {
-        return Err(HttpLexerError::MalformedHttpFile(
-            "request line is missing\nmust have at least one line with a <method> <ur>",
-        ));
-    };
-
-    if let Some(body) = lines.next() {
-        builder.add_body(body.to_string());
-    }
+    // until line == "\n", then HttpToken::Body(..)
+    let builder = parser::request(&contents)?;
 
     Ok(builder)
 }
@@ -53,19 +50,44 @@ pub fn parse_from_utf8<T: AsRef<[u8]>>(
 pub mod parser {
     use super::*;
 
-    pub fn line(line: &str) -> Option<[&str; 2]> {
-        let content = line.split(' ').collect::<Vec<&str>>();
-        match content[..] {
-            [first, second] => Some([first, second]),
-            [..] => None,
+    /// <METHOD> <URL>
+    /// METHOD = letters only
+    /// URL    = https://www.rfc-editor.org/rfc/rfc9110.html#section-4.1
+    pub fn parse_request_line(line: &str) -> Option<[&str; 2]> {
+        let mut line = line.split(' ');
+        let method = line.next()?;
+        let url = line.next()?;
+
+        if method.is_empty() || url.is_empty() {
+            return None;
         }
+
+        Some([method, url])
     }
 
-    pub fn request(first_half_of_http_file: &str) -> Result<RequestBuilder, HttpLexerError> {
-        let mut lines = first_half_of_http_file.lines();
+    /// <HEADER>: <VALUES>
+    /// HEADER = letters + '-'
+    /// VALUES = <VALUE> ... <VALUE>
+    /// VALUE = alphanumerics
+    pub fn parse_header_line(line: &str) -> Option<[&str; 2]> {
+        let mut line = line.split(": ");
+        let header_name = line.next()?;
+        let header_value = line.next()?;
 
-        let first = lines.next();
-        let first = if let Some(x) = first {
+        if header_name.is_empty() || header_value.is_empty() {
+            return None;
+        }
+
+        Some([header_name, header_value])
+    }
+
+    pub fn request(contents: &str) -> Result<RequestBuilder, HttpLexerError> {
+        let mut lines = contents.lines();
+        let mut row = 1;
+        let col = 1;
+
+        let first_line = if let Some(x) = lines.next() {
+            log::debug!("[{} _request]: {}", row, x);
             x
         } else {
             return Err(HttpLexerError::MalformedHttpFile(
@@ -73,30 +95,65 @@ pub mod parser {
             ));
         };
 
-        let [method, url] = self::line(first).ok_or(HttpLexerError::MalformedLine {
-            row: 0,
-            col: 0,
-            content: first.to_string(),
-            reason: std::borrow::Cow::Borrowed(
-                "a method and a url path is expected\n<METHOD> <URL>",
-            ),
-        })?;
+        let [method, url] =
+            self::parse_request_line(first_line).ok_or(HttpLexerError::MalformedLine {
+                row,
+                col,
+                content: first_line.to_string(),
+                reason: std::borrow::Cow::Borrowed(
+                    "a method and a url path is expected\n<METHOD> <URL>",
+                ),
+            })?;
 
         let mut builder = RequestBuilder::new(method, url)?;
 
-        for (mut row, line) in lines.enumerate() {
+        // parse headers
+        let mut current = lines.next();
+        while let Some(line) = current {
             row += 1;
+
+            if line.is_empty() {
+                log::debug!("[{} _newline]: {}", row, line);
+                break;
+            }
+
+            log::debug!("[{} __header]: {}", row, line);
+
             let [header_name, header_value] =
-                self::line(line).ok_or(HttpLexerError::MalformedLine {
+                self::parse_header_line(line).ok_or(HttpLexerError::MalformedLine {
                     row,
-                    col: 0,
+                    col,
                     content: line.to_string(),
                     reason: std::borrow::Cow::Borrowed(
-                        "a header name and value is expected\n<NAME> <VALUE>",
+                        r#"
+does not conform to header formatting rule(s)
+<NAME>: <VALUE>"#,
                     ),
                 })?;
 
             builder = builder.add_header(header_name, header_value);
+            current = lines.next();
+        }
+
+        // eventually make this configurable?
+        // likely always want to load the unaltered request body
+
+        // should use .remainder() here, but its not stabilized
+        // https://doc.rust-lang.org/std/str/struct.Split.html#method.remainder
+        let preserve_newlines = true;
+        let remaining: String = if preserve_newlines {
+            lines.fold(String::new(), |mut p, c| {
+                p.push_str(c);
+                p.push('\n');
+                p
+            })
+        } else {
+            lines.collect()
+        };
+
+        if remaining.len() > 0 {
+            log::debug!("[{}+ ___body]: {}", row + 1, &remaining);
+            builder.add_body(remaining);
         }
 
         Ok(builder)
@@ -108,39 +165,61 @@ mod test {
     use super::*;
 
     #[test]
-    pub fn should_receive_ok() {
+    pub fn http_single_line() {
         let http = r#"GET https://jsonplaceholder.typicode.com/todos/1"#;
         let result = self::parse_from_utf8(http);
         assert!(result.is_ok());
         let result = result.unwrap();
         assert!(!result.has_headers());
         assert!(!result.has_body());
+        assert_eq!(result.get_method(), "GET");
+        assert_eq!(
+            result.get_url(),
+            "https://jsonplaceholder.typicode.com/todos/1"
+        );
     }
 
     #[test]
-    pub fn should_receive_ok_with_single_header() {
+    pub fn http_with_single_header() {
         let http = r#"GET https://jsonplaceholder.typicode.com/todos/1
-Content-Type application/json"#;
+Content-Type: application/json
+"#;
         let result = self::parse_from_utf8(http);
         assert!(result.is_ok());
-        assert!(result.unwrap().has_headers());
+        let result = result.unwrap();
+        assert_eq!(result.get_method(), "GET");
+        assert_eq!(
+            result.get_url(),
+            "https://jsonplaceholder.typicode.com/todos/1"
+        );
+        assert!(result.has_headers());
+        assert_eq!(result.get_header("Content-Type"), Some("application/json"));
     }
 
     #[test]
-    pub fn should_receive_ok_with_many_headers() {
+    pub fn http_with_many_headers() {
         let http = r#"GET https://jsonplaceholder.typicode.com/todos/1
-Content-Type application/json
-Accept application/json"#;
+Content-Type: application/json
+Accept: application/json
+"#;
         let result = self::parse_from_utf8(http);
         assert!(result.is_ok());
-        assert!(result.unwrap().has_headers());
+        let result = result.unwrap();
+        assert_eq!(result.get_method(), "GET");
+        assert_eq!(
+            result.get_url(),
+            "https://jsonplaceholder.typicode.com/todos/1"
+        );
+        assert!(result.has_headers());
+        assert_eq!(result.get_header("Content-Type"), Some("application/json"));
+        assert_eq!(result.get_header("Accept"), Some("application/json"));
     }
 
     #[test]
-    pub fn should_receive_ok_with_many_headers_and_body() {
+    pub fn http_with_many_headers_and_body() {
         let http = r#"GET https://jsonplaceholder.typicode.com/todos/1
-Content-Type application/json
-Accept application/json
+Content-Type: application/json
+Accept: application/json
 
 {
     "message": "hello world",
@@ -149,7 +228,44 @@ Accept application/json
         let result = self::parse_from_utf8(http);
         assert!(result.is_ok());
         let result = result.unwrap();
+        assert_eq!(result.get_method(), "GET");
+        assert_eq!(
+            result.get_url(),
+            "https://jsonplaceholder.typicode.com/todos/1"
+        );
         assert!(result.has_headers());
+        assert!(result.has_body());
+        assert_eq!(result.get_header("Content-Type"), Some("application/json"));
+        assert_eq!(result.get_header("Accept"), Some("application/json"));
+        assert_eq!(
+            result.into_body(),
+            Some(String::from(
+                r#"{
+    "message": "hello world",
+    "count": 10
+}
+"#
+            ))
+        );
+    }
+
+    #[test]
+    pub fn http_with_body_only() {
+        let http = r#"GET https://jsonplaceholder.typicode.com/todos/1
+
+{
+    "message": "hello world",
+    "count": 10
+}"#;
+        let result = self::parse_from_utf8(http);
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result.get_method(), "GET");
+        assert_eq!(
+            result.get_url(),
+            "https://jsonplaceholder.typicode.com/todos/1"
+        );
+
         assert!(result.has_body());
         assert_eq!(
             result.into_body(),
@@ -157,9 +273,29 @@ Accept application/json
                 r#"{
     "message": "hello world",
     "count": 10
-}"#
+}
+"#
             ))
         );
+    }
+
+    #[test]
+    pub fn http_with_headers_and_many_header_values() {
+        let http = r#"GET https://jsonplaceholder.typicode.com/todos/1
+Content-Type: application/json
+Accept-Language: en, mi
+"#;
+        let result = self::parse_from_utf8(http);
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result.get_method(), "GET");
+        assert_eq!(
+            result.get_url(),
+            "https://jsonplaceholder.typicode.com/todos/1"
+        );
+        assert!(result.has_headers());
+        assert_eq!(result.get_header("Content-Type"), Some("application/json"));
+        assert_eq!(result.get_header("Accept-Language"), Some("en, mi"));
     }
 
     /*     #[test]
@@ -170,7 +306,7 @@ Accept application/json
                 self::parse_from_utf8(http),
                 Err(HttpLexerError::MalformedLine {
                     row: 1,
-                    col: 0,
+                    col: 1,
                     content: _,
                     reason: _
                 })
@@ -178,15 +314,61 @@ Accept application/json
         } */
 
     #[test]
-    pub fn throws_error_for_malformed_line() {
+    pub fn http_multiline_errors_when_last_line_is_not_only_newline() {
+        let http = r#"GET https://jsonplaceholder.typicode.com/todos/1
+Content-Type: application/json
+     "#;
+        let result = self::parse_from_utf8(http);
+        //println!("{:#?}", result);
+        assert!(result.is_err());
+        assert!(matches!(
+            result,
+            Err(HttpLexerError::MalformedLine {
+                row: 3,
+                col: 1,
+                content: _,
+                reason: _
+            })
+        ));
+    }
+
+    /*     #[test]
+        pub fn http_multiline_errors_when_a_line_is_empty() {
+
+            let http = r#"GET https://jsonplaceholder.typicode.com/todos/1
+    Content-Type: application/json
+
+    Accept-Language: en, mi
+    asdsads
+    asldaslkdm
+    alkaslkdas
+    asmasldmslkm
+    "#;
+            let result = self::parse_from_utf8(http);
+            println!("{:#?}", result);
+            assert!(result.is_err());
+            assert!(matches!(
+                result,
+                Err(HttpLexerError::MalformedLine {
+                    row: 3,
+                    col: 1,
+                    content: _,
+                    reason: _
+                })
+            ));
+        } */
+
+    #[test]
+    pub fn http_multiline_errors_when_header_name_is_missing_colon() {
         let http = r#"GET https://jsonplaceholder.typicode.com/todos/1
 Content-Type application/json
-     "#;
+Accept-Language: en, mi
+"#;
         assert!(matches!(
             self::parse_from_utf8(http),
             Err(HttpLexerError::MalformedLine {
                 row: 2,
-                col: 0,
+                col: 1,
                 content: _,
                 reason: _
             })
@@ -194,7 +376,7 @@ Content-Type application/json
     }
 
     #[test]
-    pub fn throws_error_on_empty() {
+    pub fn http_errors_when_empty() {
         let http = r#""#;
         assert!(matches!(
             self::parse_from_utf8(http),
@@ -202,18 +384,19 @@ Content-Type application/json
         ));
     }
 
-    /* #[test]
+    #[test]
     pub fn throws_error_on_missing_url() {
         let http = r#"GET "#;
-        let result = execute(http);
+        let result = self::parse_from_utf8(http);
+        println!("{:#?}", result);
         assert!(matches!(
             result,
             Err(HttpLexerError::MalformedLine {
+                row: 1,
                 col: _,
                 content: _,
-                expected: _,
-                row: _
+                reason: _,
             })
         ));
-    } */
+    }
 }

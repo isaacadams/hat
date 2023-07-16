@@ -20,6 +20,19 @@ impl RequestBuilder {
         }
     }
 
+    #[allow(dead_code)]
+    pub fn get_header(&self, key: &str) -> Option<&str> {
+        self.inner
+            .headers_ref()
+            .and_then(|h| h.get(key))
+            .and_then(|v| v.to_str().ok())
+    }
+
+    #[allow(dead_code)]
+    pub fn get_url(&self) -> &str {
+        self.endpoint.get_url()
+    }
+
     pub fn get_method(&self) -> &str {
         self.endpoint.get_method()
     }
