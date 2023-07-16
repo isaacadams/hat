@@ -1,33 +1,9 @@
 # Usage
 
-A `.toml` file configured with HTTP requests and assertions can be loaded by the `hat` CLI which will then execute the HTTP requests and run the assertions again the HTTP responses.
+See examples of using `hat`
 
-```toml
-# see other examples of a hat .toml config file in the example folder
-# e.g. example/local/config.toml
-# e.g. example/pastebin/pastebin.toml
-[environment]
-base = "https://your-api-domain.com/api/v1"
-
-[[tests]]
-http = "GET {{base}}/users"
-assertions = """
-{{ status }} == 200
-{{ headers | content-type }} == "application/json"
-{{ body | users.0.username }} == "isaacadams"
-{{ body | users.#(username=="isaacadams").username }} == "isaacadams"
-"""
-[tests.outputs]
-userId = "{{ body | users.#(username==\"isaacadams\").id }}"
-
-[[tests]]
-http = "GET {{base}}/users/{{userId}}"
-assertions = """
-{{ status }} == 200
-{{ headers | content-type }} == "application/json"
-{{ body | username }} == "isaacadams"
-"""
-```
+- [localhost example #1](./example/local/README.md)
+- [pastebin example #1](./example/pastebin/README.md)
 
 ```console
 $ hat --help
@@ -53,6 +29,59 @@ Options:
   -h, --help               Print help
   -V, --version            Print version
 
+```
+
+# `.toml` configuration
+
+A `.toml` file configured with HTTP requests and assertions can be loaded by the `hat` CLI which will then execute the HTTP requests and run the assertions again the HTTP responses.
+
+```toml
+# see other examples of a hat .toml config file in the example folder
+# e.g. example/local/config.toml
+# e.g. example/pastebin/pastebin.toml
+[environment]
+# any variable can be defined here that needs to be used throughout testing
+# <name> = <value>
+base = "https://your-api-domain.com/api/v1"
+
+[[tests]]
+# http = "<METHOD> <URL>" OR "path/to/file.http" OR
+# http = """
+#<METHOD> <URL>
+#<HEADER> <VALUE>
+#
+#<BODY>
+#"""
+http = "GET {{base}}/users"
+# optional description
+description = "get the users"
+# each line in assertions is evaluated
+# three variables are generated from the HTTP response: status, headers, and body
+# status: number
+# headers: json
+# body: whatever the endpoint returns: json, xml, plaintext, etc.s
+assertions = """
+{{ status }} == 200
+{{ headers | content-type }} == "application/json"
+{{ body | users.0.username }} == "isaacadams"
+{{ body | users.#(username=="isaacadams").username }} == "isaacadams"
+"""
+# using response variables, add new variables to the [environment]
+[tests.outputs]
+userId = "{{ body | users.#(username==\"isaacadams\").id }}"
+
+# write a follow-up test
+[[tests]]
+# uses {{userId}} defined from previous steps' output
+http = """
+GET {{base}}/users/{{userId}}
+Accept application/json
+"""
+assertions = """
+{{ status }} == 200
+{{ headers | content-type }} == "application/json"
+{{ body | username }} == "isaacadams"
+"""
 ```
 
 # .http files
