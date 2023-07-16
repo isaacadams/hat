@@ -41,15 +41,19 @@ pub struct Config {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TestConfig {
-    name: String,
+    description: Option<String>,
     http: String,
     assertions: String,
     outputs: Option<HashMap<String, String>>,
 }
 
 impl HatTestBuilder for TestConfig {
-    fn build<T: Store + RequestExecutor>(self, hat: &T) -> anyhow::Result<HatTestOutput> {
-        match build(self, hat) {
+    fn build<T: Store + RequestExecutor>(
+        self,
+        hat: &T,
+        buffer: &mut String,
+    ) -> anyhow::Result<HatTestOutput> {
+        match build(self, hat, buffer) {
             Ok(t) => Ok(t),
             Err(e) => Err(HatError::TestFailedToBuild(e.to_string()).into()),
         }
@@ -59,6 +63,7 @@ impl HatTestBuilder for TestConfig {
 fn build<T: Store + RequestExecutor>(
     hat_test_config: TestConfig,
     hat: &T,
+    _: &mut String,
 ) -> Result<HatTestOutput, HatError> {
     // extract the raw http request from config
     // can either be a path to an .http file or the raw http request
@@ -69,8 +74,18 @@ fn build<T: Store + RequestExecutor>(
 
     // parses the raw http request into something the http client can use
     let request = crate::http_file_parser::parse(http_contents.as_str())?;
+    let method = request.get_method().to_string();
     let response = hat.execute(request)?;
-    log::info!("{} {}", response.status(), response.get_url());
+    let response_info = format!(
+        "{} {} {} {} {}",
+        response.status(),
+        response.status_text(),
+        method,
+        response.get_url(),
+        response.http_version()
+    );
+
+    log::info!("{}", &response_info);
     log::debug!("{:#?}", &response);
 
     // these stores contain the data from the response headers and body
@@ -81,7 +96,7 @@ fn build<T: Store + RequestExecutor>(
 
     let assertions =
         store_composed.match_and_replace(&hat_test_config.assertions, |v| v.as_literal());
-    let assert = assertion::new(hat_test_config.name, assertions);
+    let assert = assertion::new(response_info, hat_test_config.description, assertions);
 
     let outputs = match hat_test_config.outputs {
         Some(o) => Some(factory::outputs(&store_composed, o)?),

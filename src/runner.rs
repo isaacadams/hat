@@ -7,7 +7,11 @@ use crate::{
 pub type HatTestOutput = (Box<dyn Assert>, Option<StoreUnion>);
 
 pub trait HatTestBuilder {
-    fn build<T: Store + RequestExecutor>(self, global: &T) -> anyhow::Result<HatTestOutput>;
+    fn build<T: Store + RequestExecutor>(
+        self,
+        global: &T,
+        buffer: &mut String,
+    ) -> anyhow::Result<HatTestOutput>;
 }
 
 pub trait RequestExecutor {
@@ -53,7 +57,7 @@ impl HatRunner {
         let mut all_tests_pass = true;
 
         for r in tests {
-            match r.build(self) {
+            match r.build(self, &mut result) {
                 Ok((test, outputs)) => {
                     all_tests_pass &= test.assert(&mut result);
 
@@ -62,6 +66,7 @@ impl HatRunner {
                     }
                 }
                 Err(e) => {
+                    all_tests_pass = false;
                     result.push_str(crate::assertion::pretty_bool(false));
                     result.push_str(e.to_string().as_str());
                 }
@@ -70,7 +75,7 @@ impl HatRunner {
             result.push_str("\n\n");
         }
 
-        println!("{}", result);
+        println!("{}", result.trim_end_matches('\n'));
 
         all_tests_pass
     }

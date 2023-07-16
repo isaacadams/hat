@@ -1,0 +1,17 @@
+# local build: docker build example -t hat-httpmock:latest
+# push: 
+#   docker image tag hat-httpmock:latest isaacadams/hat-httpmock:latest
+#   docker image push isaacadams/hat-httpmock:latest
+FROM rust:latest
+
+RUN cargo install httpmock --features="standalone"
+
+COPY mock /mocks
+
+ENV HTTPMOCK_MOCK_FILES_DIR /mocks
+ENV RUST_LOG info
+ENV HTTPMOCK_PORT=5000
+ENV HTTPMOCK_REQUEST_HISTORY_LIMIT=100
+
+ENTRYPOINT httpmock --expose
+EXPOSE 5000/tcp

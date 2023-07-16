@@ -1,74 +1,97 @@
 # Usage
 
-- `hat <PATH>`
-- `hat config.toml`
+See examples of using `hat`
 
-Define your tests in a `*.toml` file and then call `hat /path/to/<filename>.toml`
+- [localhost](./example/local/local.md)
+- [pastebin](./example/pastebin/pastebin.md)
+- [fail](./example/fail/fail.md)
+
+```console
+$ hat --help
+hat runs HTTP tests based on a toml configuration file.
+
+The configured tests can check response status, heeaders, and body
+using binary operations such as ==, >, <, !=, etc.
+
+If one or more tests fail, hat will return a failed exit code.
+
+Use --help for more USAGE details.
+
+Project homepage: https://github.com/isaacadams/hat
+
+
+Usage: hat[EXE] [OPTIONS] <PATH>
+
+Arguments:
+  <PATH>  path to .toml configuration file
+
+Options:
+  -v, --verbose <VERBOSE>  verbose level: DEBUG, INFO, ERROR [default: DEBUG]
+  -h, --help               Print help
+  -V, --version            Print version
+
+```
+
+# `.toml` configuration
+
+A `.toml` file configured with HTTP requests and assertions can be loaded by the `hat` CLI which will then execute the HTTP requests and run the assertions again the HTTP responses.
 
 ```toml
-# <filename>.toml
+# see other examples of a hat .toml config file in the example folder
+# e.g. example/local/config.toml
+# e.g. example/pastebin/pastebin.toml
 [environment]
-base = "http://localhost:5000"
+# any variable can be defined here that needs to be used throughout testing
+# <name> = <value>
+base = "https://your-api-domain.com/api/v1"
 
 [[tests]]
-name = "status only, no headers or body"
-http = "GET {{base}}/200"
+# http = "<METHOD> <URL>" OR "path/to/file.http" OR
+# http = """
+#<METHOD> <URL>
+#<HEADER> <VALUE>
+#
+#<BODY>
+#"""
+http = "GET {{base}}/users"
+# optional description
+description = "get the users"
+# each line in assertions is evaluated
+# three variables are generated from the HTTP response: status, headers, and body
+# status: number
+# headers: json
+# body: whatever the endpoint returns (e.g. json, xml, plaintext, etc.)
 assertions = """
-{{status}} == 200
+{{ status }} == 200
+{{ headers | content-type }} == "application/json"
+{{ body | users.0.username }} == "isaacadams"
+{{ body | users.#(username=="isaacadams").username }} == "isaacadams"
 """
-
-[[tests]]
-name = "status + json body, no headers"
-http = "GET {{base}}/message"
-assertions = """
-{{status}} == 200
-{{body | message}} == "hello world!"
-"""
-
-[[tests]]
-name = "post message w/ header"
-http = "POST {{base}}/message"
-assertions = """
-{{status}} == 200
-{{body | id}} == 2
-{{headers | content-type}} == "application/json"
-{{body | message}} == "hello, a second time"
-{{body | next_route}} == "posts"
-"""
+# using response variables, add new variables to the [environment]
 [tests.outputs]
-messageId = "{{body | id}}"
-nextRoute = "{{body | next_route}}"
+userId = "{{ body | users.#(username==\"isaacadams\").id }}"
 
+# write a follow-up test
 [[tests]]
-name = "show example of querying arrays in response"
-http = "GET {{base}}/{{nextRoute}}"
-assertions = """
-{{status}} == 200
-{{headers | content-length}} > 0
-{{body | 0}} == "how to build a CLI program in rust"
-{{body | 1}} == "why you might need a vacation after build a CLI program in rust"
-{{body | 2}} == "reasons for drinking beer while writing a rust CLI program"
+# uses {{userId}} defined from previous steps' output
+http = """
+GET {{base}}/users/{{userId}}
+Accept application/json
 """
-
-[[tests]]
-name = "text body works"
-http = "GET {{base}}/posts/1"
 assertions = """
-{{status}} == 200
-{{body}} == "how to build a CLI program in rust"
-"""
-
-[[tests]]
-name = "show example of querying arrays in response"
-http = "example/create-post.http"
-assertions = """
-{{status}} == 201
+{{ status }} == 200
+{{ headers | content-type }} == "application/json"
+{{ body | username }} == "isaacadams"
 """
 ```
 
-the above configuration points to `create-post.http`, this is a file type unique to this CLI tool. Below is an example of how you can use an `.http` file. The idea that some requests are complex and the request bodies can become very large, distracting from the flow of the config file. Having the ability to define requests in their own file also opens up the possibility to reuse a request.
+# .http files
 
-```
+the `example/local/config.toml` uses a `create-post.http` file.
+
+this is a file type unique to this CLI tool. Below is an example of how you can use an `.http` file. The idea that some requests are complex and the request bodies can become very large, distracting from the flow of the config file. Having the ability to define requests in their own file also opens up the possibility to reuse a request.
+
+```http
 POST {{base}}/posts
 Content-Type application/json
 

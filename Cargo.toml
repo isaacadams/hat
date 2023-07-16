@@ -1,10 +1,21 @@
 [package]
 name = "hat"
-version = "0.1.8"
+version = "0.2.0"
 edition = "2021"
 authors = ["Isaac Adams <isaac.d.adams@gmail.com>"]
 license = "MIT OR Apache-2.0"
-description = "run HTTP tests"
+description = """
+hat runs HTTP tests based on a toml configuration file.
+
+The configured tests can check response status, heeaders, and body
+using binary operations such as ==, >, <, !=, etc.
+
+If one or more tests fail, hat will return a failed exit code.
+
+Use --help for more USAGE details.
+
+Project homepage: https://github.com/isaacadams/hat
+"""
 readme = "README.md"
 homepage = "https://github.com/isaacadams/hat"
 repository = "https://github.com/isaacadams/hat"
@@ -39,3 +50,4 @@ http = "0.2.9"
 
 [dev-dependencies]
 jaq-core = "0.10.0"
+trycmd = "0.14.16"

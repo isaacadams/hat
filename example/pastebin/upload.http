@@ -1,0 +1,4 @@
+POST {{base}}/pastes
+Content-Type application/x-www-form-urlencoded
+
+code=I was created by hat.&language=plaintext&expiration=PT1H

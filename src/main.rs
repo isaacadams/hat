@@ -1,13 +1,19 @@
 use std::process::ExitCode;
 
-fn main() -> anyhow::Result<ExitCode> {
+fn main() -> ExitCode {
     env_logger::init();
 
-    hat::start().map(|s| {
-        if s {
-            ExitCode::SUCCESS
-        } else {
+    match hat::start() {
+        Ok(s) => {
+            if s {
+                ExitCode::SUCCESS
+            } else {
+                ExitCode::FAILURE
+            }
+        }
+        Err(e) => {
+            println!("{}", e);
             ExitCode::FAILURE
         }
-    })
+    }
 }
