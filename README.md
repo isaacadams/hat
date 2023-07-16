@@ -49,7 +49,7 @@ base = "https://your-api-domain.com/api/v1"
 # http = "<METHOD> <URL>" OR "path/to/file.http" OR
 # http = """
 #<METHOD> <URL>
-#<HEADER> <VALUE>
+#<HEADER>: <VALUE>
 #
 #<BODY>
 #"""
