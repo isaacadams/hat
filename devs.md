@@ -95,12 +95,14 @@ This tool aims to support most cases by making the data in those body formats av
 
 # TODO
 
-- make global store aware of environment variables, and allow them to be used with {{env:...}} syntax
+- bugs
+  - headers may sometimes have ':' after header name
+  - header values can be space delimited
+- add `Download` section to README.md
 - errors
   - ✅ if error occurs within test, fail the test, keep running all the other tests
   - display error underneath failed test
   - show failed test if it can't find specified `.http` file instead of panic
-- support non-json response body extraction: xml querying and regex
 - deployment
   - cargo publish/cargo install
   - linux
@@ -109,8 +111,6 @@ This tool aims to support most cases by making the data in those body formats av
 - use the cli in a github action
   - https://docs.github.com/en/actions/creating-actions/creating-a-docker-container-action
   - https://docs.github.com/en/actions/creating-actions/publishing-actions-in-github-marketplace#publishing-an-action
-- special syntax to build clients with base domain and auth
-- build lexer to find {{token}} and replace them with Store trait
 - remove dependency on serde_json
 - ✅ add STATUS URL to test output after name
 - ✅ use new .http syntax that supports file path or raw
@@ -124,20 +124,26 @@ This tool aims to support most cases by making the data in those body formats av
 
 # Ideas / Improvements
 
+- allow parameters to be passed into `.http` files as if they are a function
+  - currently, `.http` files can reference variables from the global environment store
+  - however, this may not be flexible enough for some cases where a `.http` file needs to be reused across multiple tests
+  - in this case, the variables in the `.http` may change across each use, but the global environment store is static
+  - thus, there should be a way to define parameters at the `.http` file level so that different variables can be passed in during testing
+- support non-json response body extraction: xml querying and regex
+- make global store aware of environment variables, and allow them to be used with {{env:...}} syntax
 - run tests inside container with httpmock
   - job container: https://docs.github.com/en/actions/using-jobs/running-jobs-in-a-container
   - service container: https://docs.github.com/en/actions/using-containerized-services/about-service-containers
+- add `http <PATH>` subcommand
+  - `<PATH>` can be .http or .toml
+  - if .http then it runs the requests and prints out the response status, headers, and body
+  - if .toml then it runs every HTTP request in the toml and prints out each response status, headers, and body
 
 # Missing Configuration
 
 - named env settings (prod, dev, staging, etc.)
 - default headers
 - timeout on requests
-
-# Missing Tests
-
-- bad connection
-- trycmd
 
 # Helpful Commands
 
