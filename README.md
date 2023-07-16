@@ -1,5 +1,34 @@
 # Usage
 
+The `hat` CLI points to a `.toml` file configuring with http endpoints and tests. Below is an example of such a file.
+
+```toml
+# see other examples of a hat .toml config file in the example folder
+# e.g. example/local/config.toml
+# e.g. example/pastebin/pastebin.toml
+[environment]
+base = "https://your-api-domain.com/api/v1"
+
+[[tests]]
+http = "GET {{base}}/users"
+assertions = """
+{{ status }} == 200
+{{ headers | content-type }} == "application/json"
+{{ body | users.0.username }} == "isaacadams"
+{{ body | users.#(username=="isaacadams").username }} == "isaacadams"
+"""
+[tests.outputs]
+userId = "{{ body | users.#(username==\"isaacadams\").id }}"
+
+[[tests]]
+http = "GET {{base}}/users/{{userId}}"
+assertions = """
+{{ status }} == 200
+{{ headers | content-type }} == "application/json"
+{{ body | username }} == "isaacadams"
+"""
+```
+
 ```console
 $ hat --help
 hat runs HTTP tests based on a toml configuration file.
