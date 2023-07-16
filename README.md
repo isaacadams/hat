@@ -59,7 +59,7 @@ description = "get the users"
 # three variables are generated from the HTTP response: status, headers, and body
 # status: number
 # headers: json
-# body: whatever the endpoint returns: json, xml, plaintext, etc.s
+# body: whatever the endpoint returns (e.g. json, xml, plaintext, etc.)
 assertions = """
 {{ status }} == 200
 {{ headers | content-type }} == "application/json"
