@@ -95,9 +95,6 @@ This tool aims to support most cases by making the data in those body formats av
 
 # TODO
 
-- bugs
-  - headers may sometimes have ':' after header name
-  - header values can be space delimited
 - add `Download` section to README.md
 - errors
   - ✅ if error occurs within test, fail the test, keep running all the other tests
@@ -130,7 +127,7 @@ This tool aims to support most cases by making the data in those body formats av
   - in this case, the variables in the `.http` may change across each use, but the global environment store is static
   - thus, there should be a way to define parameters at the `.http` file level so that different variables can be passed in during testing
 - support non-json response body extraction: xml querying and regex
-- make global store aware of environment variables, and allow them to be used with {{env:...}} syntax
+- ✅ make global store aware of environment variables and .env files
 - run tests inside container with httpmock
   - job container: https://docs.github.com/en/actions/using-jobs/running-jobs-in-a-container
   - service container: https://docs.github.com/en/actions/using-containerized-services/about-service-containers

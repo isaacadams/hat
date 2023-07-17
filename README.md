@@ -42,6 +42,7 @@ A `.toml` file configured with HTTP requests and assertions can be loaded by the
 # e.g. example/pastebin/pastebin.toml
 [environment]
 # any variable can be defined here that needs to be used throughout testing
+# all environment variables and .env file(s) will be loaded automatically
 # <name> = <value>
 base = "https://your-api-domain.com/api/v1"
 
@@ -79,7 +80,7 @@ assertions = """
 """
 ```
 
-# .http files
+# `.http` files
 
 the `example/local/config.toml` uses a `create-post.http` file.
 

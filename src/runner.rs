@@ -49,7 +49,7 @@ impl Store for HatRunner {
 impl HatRunner {
     pub fn new(global: StoreUnion, client: ureq::Agent) -> Self {
         Self {
-            global: vec![global],
+            global: vec![global, StoreUnion::Env],
             client,
         }
     }
