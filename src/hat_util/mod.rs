@@ -10,8 +10,4 @@ pub use {
     store::{Store, StoreComposed, StoreUnion},
 };
 
-pub trait Assert {
-    fn assert(&self, buffer: &mut String) -> bool;
-}
-
 type UtilResult<T> = Result<T, UtilError>;

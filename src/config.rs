@@ -103,5 +103,5 @@ fn build<T: Store + RequestExecutor>(
         None => None,
     };
 
-    Ok((Box::new(assert), outputs))
+    Ok((assert, outputs))
 }
