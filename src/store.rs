@@ -25,7 +25,7 @@ impl Store for StoreUnion {
                     content.value()
                 }
             }
-            StoreUnion::Env => dotenvy::var(key).ok().map(|v| Variable::Text(v)),
+            StoreUnion::Env => dotenvy::var(key).ok().map(Variable::Text),
         };
 
         value
