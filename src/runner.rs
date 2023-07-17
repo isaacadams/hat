@@ -1,7 +1,8 @@
 use crate::{
     assertion::TestAssertions,
     error::HatError,
-    hat_util::{RequestBuilder, Store, StoreUnion},
+    hat_util::{Store, StoreUnion},
+    http_file::RequestBuilder,
     query::Variable,
 };
 

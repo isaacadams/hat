@@ -1,4 +1,4 @@
-use super::{Endpoint, EndpointError};
+use super::endpoint::{Endpoint, EndpointError};
 
 #[derive(Debug)]
 pub struct RequestBuilder {
