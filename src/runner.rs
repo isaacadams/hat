@@ -1,9 +1,9 @@
 use crate::{
     assertion::TestAssertions,
     error::HatError,
-    hat_util::{Store, StoreUnion},
     http_file::RequestBuilder,
     query::Variable,
+    store::{Store, StoreUnion},
 };
 
 pub type HatTestOutput = (TestAssertions, Option<StoreUnion>);

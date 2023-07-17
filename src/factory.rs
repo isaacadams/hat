@@ -1,6 +1,8 @@
-use crate::error::HatError;
-use crate::hat_util::{Store, StoreUnion};
-use crate::query::Content;
+use crate::{
+    error::HatError,
+    query::Content,
+    store::{Store, StoreUnion},
+};
 use std::collections::HashMap;
 
 pub fn outputs<S: Store>(

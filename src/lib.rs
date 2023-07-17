@@ -2,12 +2,12 @@ mod assertion;
 mod config;
 mod error;
 mod factory;
-mod hat_util;
 mod http_file;
 #[allow(dead_code)]
 mod operator;
 mod query;
 mod runner;
+mod store;
 #[cfg(test)]
 mod test;
 
@@ -43,7 +43,7 @@ fn test(config_path: &str) -> anyhow::Result<bool> {
 
     let mut iter = config.tests.into_iter();
     let mut runner = HatRunner::new(
-        hat_util::StoreUnion::MapStringToContent(environment),
+        store::StoreUnion::MapStringToContent(environment),
         ureq::AgentBuilder::new().build(),
     );
     Ok(runner.test(&mut iter))

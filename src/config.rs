@@ -1,9 +1,9 @@
-use crate::hat_util::Store;
 use crate::{
     assertion,
     error::HatError,
     factory,
     runner::{HatTestBuilder, HatTestOutput, RequestExecutor},
+    store::Store,
 };
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
