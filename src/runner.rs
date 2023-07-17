@@ -1,10 +1,12 @@
 use crate::{
+    assertion::TestAssertions,
     error::HatError,
-    hat_util::{Assert, RequestBuilder, Store, StoreUnion},
+    http_file::RequestBuilder,
     query::Variable,
+    store::{Store, StoreUnion},
 };
 
-pub type HatTestOutput = (Box<dyn Assert>, Option<StoreUnion>);
+pub type HatTestOutput = (TestAssertions, Option<StoreUnion>);
 
 pub trait HatTestBuilder {
     fn build<T: Store + RequestExecutor>(

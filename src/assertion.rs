@@ -1,5 +1,3 @@
-use crate::hat_util::Assert;
-
 pub fn is_true<T: AsRef<str>>(expression: T) -> bool {
     use evalexpr::{eval, Value};
     eval(expression.as_ref()) == Ok(Value::Boolean(true))
@@ -27,8 +25,8 @@ pub fn pretty_bool(result: bool) -> &'static str {
     }
 }
 
-impl Assert for TestAssertions {
-    fn assert(&self, buffer: &mut String) -> bool {
+impl TestAssertions {
+    pub fn assert(&self, buffer: &mut String) -> bool {
         let mut test = true;
         let start = buffer.len();
 

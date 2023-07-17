@@ -1,9 +1,9 @@
-use crate::hat_util::Store;
 use crate::{
     assertion,
     error::HatError,
     factory,
     runner::{HatTestBuilder, HatTestOutput, RequestExecutor},
+    store::Store,
 };
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
@@ -103,5 +103,5 @@ fn build<T: Store + RequestExecutor>(
         None => None,
     };
 
-    Ok((Box::new(assert), outputs))
+    Ok((assert, outputs))
 }

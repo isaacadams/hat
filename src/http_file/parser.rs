@@ -1,5 +1,4 @@
-use super::HttpLexerError;
-use crate::hat_util::RequestBuilder;
+use super::{HttpLexerError, RequestBuilder};
 
 /// <METHOD> <URL>
 /// METHOD = letters only

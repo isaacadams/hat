@@ -1,7 +1,10 @@
-use crate::hat_util::RequestBuilder;
 use std::path::Path;
 
+mod endpoint;
 mod parser;
+mod request_builder;
+
+pub use request_builder::RequestBuilder;
 
 #[derive(thiserror::Error, Debug)]
 pub enum HttpLexerError {
@@ -15,7 +18,7 @@ pub enum HttpLexerError {
         reason: std::borrow::Cow<'static, str>,
     },
     #[error("{0:#?}")]
-    UtilError(#[from] crate::hat_util::UtilError),
+    EndpointError(#[from] endpoint::EndpointError),
     #[error("{0}")]
     IO(#[from] std::io::Error),
 }
