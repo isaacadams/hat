@@ -15,6 +15,8 @@ pub enum HttpLexerError {
         reason: std::borrow::Cow<'static, str>,
     },
     #[error("{0:#?}")]
+    EndpointError(#[from] crate::hat_util::EndpointError),
+    #[error("{0:#?}")]
     UtilError(#[from] crate::hat_util::UtilError),
     #[error("{0}")]
     IO(#[from] std::io::Error),

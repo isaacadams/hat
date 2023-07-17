@@ -1,4 +1,4 @@
-use super::{Endpoint, UtilError};
+use super::{Endpoint, EndpointError};
 
 #[derive(Debug)]
 pub struct RequestBuilder {
@@ -8,7 +8,7 @@ pub struct RequestBuilder {
 }
 
 impl RequestBuilder {
-    pub fn new(method: &str, url: &str) -> Result<Self, UtilError> {
+    pub fn new(method: &str, url: &str) -> Result<Self, EndpointError> {
         Ok(Self::from_endpoint(Endpoint::new(url, method)?))
     }
 
