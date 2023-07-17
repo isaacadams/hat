@@ -1,6 +1,20 @@
+use super::*;
 use jaq_core::{parse, Ctx, Definitions, Error, RcIter, Val};
 use serde_json::{json, Value};
 use std::str::FromStr;
+
+#[test]
+fn verify_cli() {
+    use clap::CommandFactory;
+    Cli::command().debug_assert()
+}
+
+#[test]
+fn cli_tests() {
+    trycmd::TestCases::new()
+        .case("example/**/*.md")
+        .case("README.md");
+}
 
 #[test]
 fn jq_test() {
