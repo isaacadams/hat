@@ -49,15 +49,18 @@ fn test(config_path: &str) -> anyhow::Result<bool> {
     Ok(runner.test(&mut iter))
 }
 
-#[test]
-fn verify_cli() {
-    use clap::CommandFactory;
-    Cli::command().debug_assert()
-}
+#[cfg(test)]
+mod test {
+    #[test]
+    fn verify_cli() {
+        use clap::CommandFactory;
+        Cli::command().debug_assert()
+    }
 
-#[test]
-fn cli_tests() {
-    trycmd::TestCases::new()
-        .case("example/**/*.md")
-        .case("README.md");
+    #[test]
+    fn cli_tests() {
+        trycmd::TestCases::new()
+            .case("example/**/*.md")
+            .case("README.md");
+    }
 }
