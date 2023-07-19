@@ -6,6 +6,7 @@ pub type ContentMap = HashMap<String, Content>;
 #[allow(dead_code)]
 pub enum StoreUnion {
     MapStringToContent(ContentMap),
+    Env,
 }
 
 impl Store for StoreUnion {
@@ -24,6 +25,7 @@ impl Store for StoreUnion {
                     content.value()
                 }
             }
+            StoreUnion::Env => dotenvy::var(key).ok().map(Variable::Text),
         };
 
         value
