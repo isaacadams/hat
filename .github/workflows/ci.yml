@@ -51,6 +51,8 @@ jobs:
 
   examples:
     runs-on: ubuntu-latest
+    container:
+      image: hat/dockerfile
 
     env:
       RUST_LOG: off
@@ -87,6 +89,4 @@ jobs:
           args: --verbose --lib cli_tests
 
       - name: hat
-        uses: ./hat
-        with:
-          path: example/local/config.toml
+        run: hat example/local/config.toml
