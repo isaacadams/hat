@@ -1,5 +1,5 @@
 [environment]
-base = "http://localhost:5000"
+base = "http://0.0.0.0:5000"
 
 [[tests]]
 description = "status only, no headers or body"
