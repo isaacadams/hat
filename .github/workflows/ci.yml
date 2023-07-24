@@ -52,7 +52,7 @@ jobs:
   examples:
     runs-on: ubuntu-latest
     container:
-      image: hat/dockerfile
+      image: isaacadams/hat:latest
 
     env:
       RUST_LOG: off
