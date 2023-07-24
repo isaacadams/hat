@@ -1,0 +1,14 @@
+# action.yml
+name: 'hat'
+description: 'run http tests'
+
+inputs:
+  path: # path to hat toml file
+    description: 'hat toml configuration'
+    required: true
+
+runs:
+  using: 'docker'
+  image: 'dockerfile'
+  args:
+    - ${{ inputs.path }}

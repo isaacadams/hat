@@ -80,8 +80,13 @@ jobs:
         with:
           command: build
 
-      - name: Test
+      - name: trycmd
         uses: actions-rs/cargo@v1
         with:
           command: test
           args: --verbose --lib cli_tests
+
+      - name: hat
+        uses: ./hat
+        with:
+          path: example/local/config.toml
