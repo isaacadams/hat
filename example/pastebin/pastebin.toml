@@ -1,5 +1,5 @@
 [environment]
-host = "http://localhost:7777"
+host = "http://0.0.0.0:7777"
 
 [[tests]]
 http = "example/pastebin/upload.http"

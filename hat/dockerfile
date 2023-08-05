@@ -1,0 +1,6 @@
+# local: docker build hat -t hat:latest
+# push: sh scripts/docker-image-push.sh hat:latest isaacadams/hat:latest
+
+FROM rust:latest
+
+RUN cargo install hat
