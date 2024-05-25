@@ -52,8 +52,8 @@ jobs:
   binaries:
     uses: isaacadams/hat/.github/workflows/rust-binaries.yml@rust-binaries-update
     with:
-      name: bq-rs
-      version: test1
+      name: hat
+      version: test
       dry-run: true
 
   examples:
