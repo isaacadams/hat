@@ -40,9 +40,9 @@ evalexpr = "11.0.0"
 clap = { version = "4.3.3", features = ["derive"] }
 anyhow = { version = "1.0.71", features = ["backtrace"] }
 lazy_static = "1.4.0"
-toml = "0.7.4"
+toml = "0.8"
 gjson = "0.8.1"
-env_logger = "0.10.0"
+env_logger = "0.11"
 json = "0.12.4"
 ureq = "2.6.2"
 url = "2.4.0"
