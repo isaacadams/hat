@@ -28,7 +28,6 @@ cargo watch -c -w example -i example/local/mock -x 'run example/local/config.tom
 ### TODO for Release
 
 - `cargo publish` on successful releases
-- implement CHANGELOG
 
 # Docs
 
@@ -101,7 +100,6 @@ This tool aims to support most cases by making the data in those body formats av
   - display error underneath failed test
   - show failed test if it can't find specified `.http` file instead of panic
 - deployment
-  - cargo publish/cargo install
   - linux
   - choco
   - homebrew
@@ -128,7 +126,7 @@ This tool aims to support most cases by making the data in those body formats av
   - thus, there should be a way to define parameters at the `.http` file level so that different variables can be passed in during testing
 - support non-json response body extraction: xml querying and regex
 - ✅ make global store aware of environment variables and .env files
-- run tests inside container with httpmock
+- ✅ run tests inside container with httpmock
   - job container: https://docs.github.com/en/actions/using-jobs/running-jobs-in-a-container
   - service container: https://docs.github.com/en/actions/using-containerized-services/about-service-containers
 - add `http <PATH>` subcommand
