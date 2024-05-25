@@ -55,7 +55,7 @@ jobs:
       # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
       TARGET_DIR: target
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: tool dependencies (Ubuntu)
         if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -132,7 +132,7 @@ jobs:
             echo "ASSET=$package.tar.gz" >> $GITHUB_ENV
           fi
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PACKAGE }}
           path: ${{ env.ASSET }}
