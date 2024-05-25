@@ -11,6 +11,10 @@ on:
         description: 'the version being built'
         required: true
         type: string
+      dry-run:
+        description: 'only build and skip publishing the artifacts'
+        required: false
+        type: boolean
 
 env:
   CARGO_TERM_COLOR: always
@@ -55,7 +59,7 @@ jobs:
       # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
       TARGET_DIR: target
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: tool dependencies (Ubuntu)
         if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -75,6 +79,10 @@ jobs:
         with:
           toolchain: stable
           target: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ${{ matrix.target }}
 
       - name: use cross
         if: ${{ matrix.cross }}
@@ -113,6 +121,7 @@ jobs:
         run: cargo audit bin ${{ env.BINARY_PATH }}
 
       - name: archive
+        if: inputs.dry-run != true
         shell: bash
         run: |
           package="${{ env.BINARY_NAME }}-${{ env.BINARY_VERSION }}-${{ matrix.target }}"
@@ -132,7 +141,8 @@ jobs:
             echo "ASSET=$package.tar.gz" >> $GITHUB_ENV
           fi
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
+        if: inputs.dry-run != true
         with:
           name: ${{ env.PACKAGE }}
           path: ${{ env.ASSET }}
