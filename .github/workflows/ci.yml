@@ -51,6 +51,8 @@ jobs:
 
   examples:
     runs-on: ubuntu-latest
+    container:
+      image: isaacadams/hat:latest
 
     env:
       RUST_LOG: off
@@ -80,8 +82,11 @@ jobs:
         with:
           command: build
 
-      - name: Test
+      - name: trycmd
         uses: actions-rs/cargo@v1
         with:
           command: test
           args: --verbose --lib cli_tests
+
+      - name: hat
+        run: hat example/local/config.toml
