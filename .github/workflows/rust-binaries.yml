@@ -117,7 +117,7 @@ jobs:
         run: cargo audit bin ${{ env.BINARY_PATH }}
 
       - name: archive
-        if: ${{ inputs.dry-run }} != true
+        if: inputs.dry-run != true
         shell: bash
         run: |
           package="${{ env.BINARY_NAME }}-${{ env.BINARY_VERSION }}-${{ matrix.target }}"
@@ -138,7 +138,7 @@ jobs:
           fi
 
       - uses: actions/upload-artifact@v4
-        if: ${{ inputs.dry-run }} != true
+        if: inputs.dry-run != true
         with:
           name: ${{ env.PACKAGE }}
           path: ${{ env.ASSET }}
